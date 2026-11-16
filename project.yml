@@ -1,0 +1,93 @@
+name: Vanish
+options:
+  bundleIdPrefix: com.vanishcam
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 4D7YJ8BY8H
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+    DEAD_CODE_STRIPPING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: NO
+packages:
+  VanishCore:
+    path: Packages/VanishCore
+targets:
+  Vanish:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+      - path: Shared
+    dependencies:
+      - package: VanishCore
+      - target: CameraExtension
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Vanish
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.video
+        NSCameraUsageDescription: "Vanish uses your camera to produce the Vanish Camera video feed. Video never leaves your Mac."
+        NSMicrophoneUsageDescription: "Vanish listens for a finger snap to trigger the effect. Audio is analysed on your Mac and never recorded."
+        NSCameraReactionEffectGesturesEnabledDefault: false
+        NSSystemExtensionUsageDescription: "Installs the Vanish Camera virtual camera."
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, ru]
+    entitlements:
+      path: App/Vanish.entitlements
+      properties:
+        com.apple.developer.system-extension.install: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.vanishcam.Vanish
+        com.apple.security.device.camera: true
+        com.apple.security.device.audio-input: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vanishcam.Vanish
+        PRODUCT_NAME: Vanish
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_LSUIElement: YES
+  CameraExtension:
+    type: system-extension
+    platform: macOS
+    sources:
+      - path: CameraExtension
+      - path: Shared
+    dependencies:
+      - package: VanishCore
+    info:
+      path: CameraExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Vanish Camera
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundlePackageType: SYSX
+        CMIOExtension:
+          CMIOExtensionMachServiceName: $(TeamIdentifierPrefix)com.vanishcam.Vanish.CameraExtension
+        NSSystemExtensionUsageDescription: "Vanish Camera virtual camera."
+    entitlements:
+      path: CameraExtension/CameraExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.vanishcam.Vanish
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vanishcam.Vanish.CameraExtension
+        PRODUCT_NAME: com.vanishcam.Vanish.CameraExtension
+        SKIP_INSTALL: YES
+schemes:
+  Vanish:
+    build:
+      targets:
+        Vanish: all
+    run:
+      config: Debug

@@ -1,0 +1,2 @@
+"NSCameraUsageDescription" = "Vanish использует камеру, чтобы формировать видео для Vanish Camera. Видео не покидает ваш Mac.";
+"NSMicrophoneUsageDescription" = "Vanish слушает щелчок пальцами, чтобы запустить эффект. Звук анализируется на Mac и не записывается.";
