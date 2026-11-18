@@ -1,6 +1,10 @@
-# Vanish
+# Ghosted
 
-macOS menu-bar app that adds a **Vanish Camera** virtual camera. Pick it in any call app (Zoom, Meet, Teams, Telegram, FaceTime…) and vanish into dust with a shortcut (⌃⌥V), a finger snap or a “V” sign.
+<img src="Tools/AppIcon-1024.png" width="128" align="right" alt="Ghosted icon">
+
+macOS menu-bar app that adds a **Ghosted Camera** virtual camera. Pick it in any call app (Zoom, Meet, Teams, Telegram, FaceTime…) and vanish into dust with a shortcut (⌃⌥V), a finger snap or a “V” sign.
+
+The product is named **Ghosted**; the code, targets, module and bundle IDs (`com.vanishcam.*`) keep the original working name *Vanish* so the installed camera extension and App Group keep working.
 
 Design: `docs/superpowers/specs/2026-11-16-vanish-design.md` · Plan: `docs/superpowers/plans/2026-11-16-vanish.md`
 
@@ -8,10 +12,11 @@ Design: `docs/superpowers/specs/2026-11-16-vanish-design.md` · Plan: `docs/supe
 
 | Path | What |
 |---|---|
-| `App/` | Vanish.app: capture → Vision segmentation → Core Image / Metal dust → CMIO sink |
+| `App/` | Ghosted.app: capture → Vision segmentation → Core Image / Metal dust → CMIO sink |
 | `CameraExtension/` | CoreMediaIO Camera Extension: relays sink frames to the source stream; bilingual stub when the app is not running |
 | `Shared/` | Constants shared by both targets |
 | `Packages/VanishCore/` | Pure logic (state machine, gestures, room-plate stats) with unit tests |
+| `Tools/make-icons.swift` | Generates the app icon, menu-bar template icons and accent color into `App/Assets.xcassets` (`swift Tools/make-icons.swift`) |
 | `project.yml` | XcodeGen project definition (the `.xcodeproj` is generated, not committed) |
 
 ## Build

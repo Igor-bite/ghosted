@@ -9,105 +9,198 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            Divider()
+
             if !model.devicePresent {
                 installHint
-            }
-            Button {
-                model.toggle()
-            } label: {
-                Label(model.status.targetHidden ? "Appear" : "Vanish",
-                      systemImage: model.status.targetHidden ? "person.fill" : "sparkles")
-                    .frame(maxWidth: .infinity)
-            }
-            .controlSize(.large)
-            .buttonStyle(.borderedProminent)
-            .disabled(!model.status.hasPlate && !model.status.targetHidden)
-            .help(Text("Shortcut: \(settings.shortcut.display)"))
-
-            HStack {
-                Text("Shortcut")
-                Spacer()
-                Text(settings.shortcut.display).foregroundStyle(.secondary).monospaced()
-            }
-            .font(.callout)
-
-            if !model.status.hasPlate {
-                Label("Capture the empty room to enable vanishing.", systemImage: "exclamationmark.triangle")
-                    .font(.callout).foregroundStyle(.orange)
-            } else if model.status.plateCameraMismatch {
-                Label("Room snapshot was taken with another camera.", systemImage: "exclamationmark.triangle")
-                    .font(.callout).foregroundStyle(.orange)
+            } else {
+                heroButton
+                notices
             }
 
-            Picker("Camera", selection: Binding(get: { settings.cameraID ?? "" },
-                                                set: { model.selectCamera($0.isEmpty ? nil : $0) })) {
-                Text("System default").tag("")
-                ForEach(model.cameras) { Text($0.name).tag($0.id) }
+            Card(padding: 4) {
+                VStack(spacing: 0) {
+                    row("camera.fill") {
+                        Picker("Camera", selection: Binding(get: { settings.cameraID ?? "" },
+                                                            set: { model.selectCamera($0.isEmpty ? nil : $0) })) {
+                            Text("System default").tag("")
+                            ForEach(model.cameras) { Text($0.name).tag($0.id) }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 160)
+                    } label: { Text("Camera").fixedSize() }
+                    Divider().padding(.leading, 38)
+                    toggleRow("sparkles", "Dust effect", isOn: $settings.dustEnabled)
+                    Divider().padding(.leading, 38)
+                    toggleRow("hand.tap.fill", "Vanish on finger snap",
+                              isOn: Binding(get: { settings.snapEnabled }, set: { model.setSnapEnabled($0) }))
+                    Divider().padding(.leading, 38)
+                    toggleRow("hand.raised.fingers.spread.fill", "Vanish on “V” gesture", isOn: $settings.vSignEnabled)
+                }
             }
-
-            Toggle("Dust effect", isOn: $settings.dustEnabled)
-            Toggle("Vanish on finger snap", isOn: Binding(get: { settings.snapEnabled },
-                                                           set: { model.setSnapEnabled($0) }))
-            Toggle("Vanish on “V” gesture", isOn: $settings.vSignEnabled)
 
             if let msg = model.message {
-                Text(msg).font(.callout).foregroundStyle(.red)
+                Callout(verbatim: msg, systemImage: "xmark.octagon.fill", tint: .red)
             }
 
-            Divider()
-            HStack {
-                Button("Preview & Room…") { open(WindowID.preview) }
-                Spacer()
-                Button("Settings…") { open(WindowID.settings) }
-            }
-            HStack {
-                Button("Setup guide…") { open(WindowID.onboarding) }
-                Spacer()
-                Button("Quit") { NSApp.terminate(nil) }
-            }
+            footer
         }
         .padding(14)
-        .frame(width: 300)
+        .frame(width: 320)
     }
+
+    // MARK: Header
 
     private var header: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 10, height: 10)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Vanish Camera").font(.headline)
-                Text(statusText).font(.caption).foregroundStyle(.secondary)
+            AppIconView(size: 38)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: Brand.name).font(.system(size: 15, weight: .semibold, design: .rounded))
+                Text(statusDetail).font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            Spacer(minLength: 4)
+            StatusPill(text: statusShort, color: statusColor, pulsing: isLive)
+        }
+    }
+
+    // MARK: Main action
+
+    private var heroButton: some View {
+        Button {
+            model.toggle()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: model.status.targetHidden ? "person.fill.viewfinder" : "sparkles")
+                Text(model.status.targetHidden ? "Appear" : "Vanish")
+                Spacer()
+                KeyCap(text: settings.shortcut.display, onDark: true)
+            }
+        }
+        .buttonStyle(HeroButtonStyle(hidden: model.status.targetHidden))
+        .disabled(!model.status.hasPlate && !model.status.targetHidden)
+        .help(Text("Shortcut: \(settings.shortcut.display)"))
+    }
+
+    @ViewBuilder private var notices: some View {
+        if !model.status.hasPlate {
+            Button { open(WindowID.preview) } label: {
+                Callout(text: "Capture the empty room to enable vanishing.", systemImage: "camera.viewfinder")
+            }
+            .buttonStyle(.plain)
+        } else if model.status.plateCameraMismatch {
+            Button { open(WindowID.preview) } label: {
+                Callout(text: "Room snapshot was taken with another camera.")
+            }
+            .buttonStyle(.plain)
         }
     }
 
     private var installHint: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("Vanish Camera is not installed yet.", systemImage: "video.slash")
-                .font(.callout)
-            Button("Open setup guide") { open(WindowID.onboarding) }
+        VStack(alignment: .leading, spacing: 10) {
+            Callout(text: "Ghosted Camera is not installed yet.", systemImage: "video.slash.fill", tint: Brand.violet)
+            Button { open(WindowID.onboarding) } label: {
+                HStack {
+                    Image(systemName: "wand.and.stars")
+                    Text("Open setup guide")
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                }
+            }
+            .buttonStyle(HeroButtonStyle(hidden: false))
         }
     }
+
+    // MARK: Rows
+
+    private func row<Trailing: View, Label: View>(_ icon: String, @ViewBuilder trailing: () -> Trailing,
+                                                  @ViewBuilder label: () -> Label) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Brand.vanishGradient))
+            label()
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+    }
+
+    private func toggleRow(_ icon: String, _ title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+        row(icon) {
+            Toggle(title, isOn: isOn).labelsHidden().toggleStyle(.switch).controlSize(.mini)
+        } label: {
+            Text(title)
+        }
+    }
+
+    // MARK: Footer
+
+    private var footer: some View {
+        HStack(spacing: 2) {
+            footerButton("Preview & Room…", icon: "rectangle.inset.filled.and.person.filled") { open(WindowID.preview) }
+            footerButton("Setup guide…", icon: "list.bullet.clipboard") { open(WindowID.onboarding) }
+            footerButton("Settings…", icon: "gearshape") { open(WindowID.settings) }
+            Spacer()
+            footerButton("Quit", icon: "power") { NSApp.terminate(nil) }
+        }
+    }
+
+    private func footerButton(_ title: LocalizedStringKey, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .frame(width: 32, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(FooterIconStyle())
+        .help(Text(title))
+        .accessibilityLabel(Text(title))
+    }
+
+    // MARK: Status
+
+    private var isLive: Bool { model.devicePresent && (model.clients?.count ?? 0) > 0 }
 
     private var statusColor: Color {
         if !model.devicePresent { return .gray }
-        if let n = model.clients?.count, n > 0 { return model.status.targetHidden ? .purple : .green }
+        if isLive { return model.status.targetHidden ? Brand.violet : .green }
         return .secondary
     }
 
-    private var statusText: String {
+    private var statusShort: String {
         if !model.devicePresent { return String(localized: "Not installed") }
+        if isLive { return model.status.targetHidden ? String(localized: "Vanished") : String(localized: "Live") }
+        return String(localized: "Idle")
+    }
+
+    private var statusDetail: String {
+        if !model.devicePresent { return String(localized: "Finish setup to add the camera") }
         if let name = model.consumerName {
             return String(localized: "In use by \(name)")
         }
-        if let n = model.clients?.count, n > 0 { return String(localized: "In use") }
-        return String(localized: "Not in use — select “Vanish Camera” in your call app")
+        if isLive { return String(localized: "In use") }
+        return String(localized: "Select “Ghosted Camera” in your call app")
     }
 
     private func open(_ id: String) {
         openWindow(id: id)
         bringToFront()
+    }
+}
+
+private struct FooterIconStyle: ButtonStyle {
+    @State private var hover = false
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(hover ? Color.primary : Color.secondary)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.primary.opacity(configuration.isPressed ? 0.14 : hover ? 0.08 : 0))
+            )
+            .onHover { hover = $0 }
     }
 }

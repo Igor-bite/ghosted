@@ -11,7 +11,22 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Trigger") {
+            Section {
+                HStack(spacing: 12) {
+                    AppIconView(size: 52)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: Brand.name).font(.system(size: 20, weight: .bold, design: .rounded))
+                        Text("Version \(Brand.version)").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    StatusPill(text: model.devicePresent ? String(localized: "Camera installed")
+                                                         : String(localized: "Not installed"),
+                               color: model.devicePresent ? .green : .gray)
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
                 HStack {
                     Text("Shortcut")
                     Spacer()
@@ -19,6 +34,8 @@ struct SettingsView: View {
                         recording ? stopRecording() : startRecording()
                     }
                     .monospaced()
+                    .buttonStyle(.bordered)
+                    .tint(recording ? Brand.violet : nil)
                     Button("Reset") { settings.shortcut = .default }
                 }
                 if let shortcutError { Text(shortcutError).font(.caption).foregroundStyle(.red) }
@@ -37,9 +54,11 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Vanish on “V” gesture (hold 0.5 s)", isOn: $settings.vSignEnabled)
+            } header: {
+                Label("Trigger", systemImage: "bolt.fill")
             }
 
-            Section("Effect") {
+            Section {
                 Toggle("Dust effect", isOn: $settings.dustEnabled)
                 HStack {
                     Text("Duration")
@@ -53,21 +72,28 @@ struct SettingsView: View {
                 }
                 Text("Live room keeps lights and windows moving. Use Static if edges of your silhouette remain visible.")
                     .font(.caption).foregroundStyle(.secondary)
+            } header: {
+                Label("Effect", systemImage: "sparkles")
             }
 
-            Section("General") {
-                Toggle("Open Vanish at login", isOn: Binding(get: { model.launchAtLogin },
+            Section {
+                Toggle("Open Ghosted at login", isOn: Binding(get: { model.launchAtLogin },
                                                               set: { model.setLaunchAtLogin($0) }))
-                Button("Remove Vanish Camera from this Mac…", role: .destructive) { confirmRemove = true }
-                Text("Do this before deleting the app.").font(.caption).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Button("Remove Ghosted Camera from this Mac…", role: .destructive) { confirmRemove = true }
+                    Text("Do this before deleting the app.").font(.caption).foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("General", systemImage: "gearshape.fill")
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460)
-        .confirmationDialog("Remove Vanish Camera?", isPresented: $confirmRemove) {
+        .tint(Brand.violet)
+        .frame(width: 480)
+        .confirmationDialog("Remove Ghosted Camera?", isPresented: $confirmRemove) {
             Button("Remove", role: .destructive) { installer.deactivate() }
         } message: {
-            Text("Call apps will no longer see Vanish Camera. You can reinstall it from the setup guide.")
+            Text("Call apps will no longer see Ghosted Camera. You can reinstall it from the setup guide.")
         }
         .onDisappear { stopRecording() }
     }

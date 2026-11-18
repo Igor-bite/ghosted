@@ -4,9 +4,12 @@ import Foundation
 
 /// Values shared by the app and the camera extension.
 enum VanishConstants {
-    static let deviceName = "Vanish Camera"
-    static let deviceModel = "Vanish Virtual Camera"
-    static let manufacturer = "Vanish"
+    /// User-visible names (product: Ghosted).
+    static let deviceName = "Ghosted Camera"
+    static let deviceModel = "Ghosted Virtual Camera"
+    static let manufacturer = "Ghosted"
+    /// Internal stream names: the app finds the sink by name, so these stay
+    /// stable across the rename to keep working with an older extension.
     static let sourceStreamName = "Vanish Camera Video"
     static let sinkStreamName = "Vanish Camera Input"
 

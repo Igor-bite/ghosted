@@ -196,7 +196,7 @@ final class AppModel: ObservableObject {
             if !Task.isCancelled { message = nil }
         }
         let content = UNMutableNotificationContent()
-        content.title = "Vanish"
+        content.title = Brand.name
         content.body = text
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert]) { granted, _ in

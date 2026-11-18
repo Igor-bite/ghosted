@@ -17,14 +17,14 @@ struct VanishApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Window("Vanish", id: WindowID.preview) {
+        Window(String(localized: "Preview & Room"), id: WindowID.preview) {
             PreviewWindow()
                 .environmentObject(model)
                 .environmentObject(model.settings)
         }
         .windowResizability(.contentSize)
 
-        Window(String(localized: "Welcome to Vanish"), id: WindowID.onboarding) {
+        Window(String(localized: "Welcome to Ghosted"), id: WindowID.onboarding) {
             OnboardingView()
                 .environmentObject(model)
                 .environmentObject(model.settings)
@@ -32,7 +32,7 @@ struct VanishApp: App {
         }
         .windowResizability(.contentSize)
 
-        Window(String(localized: "Vanish Settings"), id: WindowID.settings) {
+        Window(String(localized: "Ghosted Settings"), id: WindowID.settings) {
             SettingsView()
                 .environmentObject(model)
                 .environmentObject(model.settings)
@@ -60,7 +60,8 @@ struct MenuBarLabel: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Image(systemName: model.status.targetHidden ? "person.fill.xmark" : "person.crop.square.filled.and.at.rectangle")
+        Image(model.status.targetHidden ? "MenuBarIconHidden" : "MenuBarIcon")
+            .renderingMode(.template)
             .task {
                 if !settings.onboardingDone {
                     openWindow(id: WindowID.onboarding)

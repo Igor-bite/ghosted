@@ -14,13 +14,16 @@
 "Settings…" = "Настройки…";
 "Setup guide…" = "Мастер настройки…";
 "Quit" = "Выйти";
-"Vanish Camera" = "Vanish Camera";
-"Vanish Camera is not installed yet." = "Vanish Camera ещё не установлена.";
+"Ghosted Camera is not installed yet." = "Ghosted Camera ещё не установлена.";
 "Open setup guide" = "Открыть мастер настройки";
 "Not installed" = "Не установлена";
+"Vanished" = "Исчез";
+"Live" = "В эфире";
+"Idle" = "Ожидание";
+"Finish setup to add the camera" = "Завершите настройку, чтобы добавить камеру";
 "In use by %@" = "Используется: %@";
 "In use" = "Используется";
-"Not in use — select “Vanish Camera” in your call app" = "Не используется — выберите «Vanish Camera» в приложении для звонков";
+"Select “Ghosted Camera” in your call app" = "Выберите «Ghosted Camera» в приложении для звонков";
 
 /* Model */
 "Metal is not available on this Mac." = "На этом Mac недоступен Metal.";
@@ -28,17 +31,26 @@
 "Microphone access is needed for snap detection." = "Для распознавания щелчка нужен доступ к микрофону.";
 
 /* Preview */
+"Preview & Room" = "Предпросмотр и комната";
 "Capture empty room" = "Снять пустую комнату";
+"Retake empty room" = "Переснять комнату";
+"Space" = "Пробел";
 "Don’t move the camera or change the lighting after capturing the room." = "После снимка не двигайте камеру и не меняйте освещение.";
-"Vanish needs access to your camera." = "Vanish нужен доступ к камере.";
+"No room snapshot" = "Комната не снята";
+"Room taken with another camera" = "Комната снята другой камерой";
+"Room ready" = "Комната готова";
+"Ghosted needs access to your camera." = "Ghosted нужен доступ к камере.";
 "Allow camera access" = "Разрешить доступ к камере";
 "Step out of the frame" = "Выйдите из кадра";
+"Capturing the room…" = "Снимаем комнату…";
 "Room captured. You can vanish now." = "Комната снята. Теперь можно исчезать.";
 "Someone is still in the frame. Retake the snapshot for a clean result." = "В кадре остался человек. Переснимите комнату для чистого результата.";
 "Could not capture the room. Try again." = "Не удалось снять комнату. Попробуйте ещё раз.";
 
 /* Settings */
-"Vanish Settings" = "Настройки Vanish";
+"Ghosted Settings" = "Настройки Ghosted";
+"Version %@" = "Версия %@";
+"Camera installed" = "Камера установлена";
 "Trigger" = "Запуск";
 "Press keys…" = "Нажмите клавиши…";
 "Reset" = "Сбросить";
@@ -52,31 +64,32 @@
 "Static snapshot" = "Статичный снимок";
 "Live room keeps lights and windows moving. Use Static if edges of your silhouette remain visible." = "Живая комната сохраняет движение света и окон. Выберите статичный снимок, если по краям остаётся силуэт.";
 "General" = "Общие";
-"Open Vanish at login" = "Открывать Vanish при входе в систему";
-"Remove Vanish Camera from this Mac…" = "Удалить Vanish Camera с этого Mac…";
+"Open Ghosted at login" = "Открывать Ghosted при входе в систему";
+"Remove Ghosted Camera from this Mac…" = "Удалить Ghosted Camera с этого Mac…";
 "Do this before deleting the app." = "Сделайте это перед удалением приложения.";
-"Remove Vanish Camera?" = "Удалить Vanish Camera?";
+"Remove Ghosted Camera?" = "Удалить Ghosted Camera?";
 "Remove" = "Удалить";
-"Call apps will no longer see Vanish Camera. You can reinstall it from the setup guide." = "Приложения для звонков перестанут видеть Vanish Camera. Установить её снова можно из мастера настройки.";
+"Call apps will no longer see Ghosted Camera. You can reinstall it from the setup guide." = "Приложения для звонков перестанут видеть Ghosted Camera. Установить её снова можно из мастера настройки.";
 "Use ⌃ or ⌘ in the shortcut — macOS blocks ⌥-only global shortcuts." = "Добавьте ⌃ или ⌘ — macOS блокирует глобальные сочетания только с ⌥.";
 
 /* Onboarding */
-"Welcome to Vanish" = "Добро пожаловать в Vanish";
-"Set up Vanish" = "Настройка Vanish";
-"Vanish adds a “Vanish Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish in a cloud of dust with a shortcut, a snap or a “V” sign." = "Vanish добавляет на Mac камеру «Vanish Camera». Выберите её в Zoom, Meet, Teams, Telegram или FaceTime — и исчезайте облаком пыли по сочетанию клавиш, щелчку пальцами или жесту «V».";
-"Move Vanish to Applications" = "Переместите Vanish в «Программы»";
+"Welcome to Ghosted" = "Добро пожаловать в Ghosted";
+"Set up Ghosted" = "Настройка Ghosted";
+"Ghosted adds a “Ghosted Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish in a cloud of dust with a shortcut, a snap or a “V” sign." = "Ghosted добавляет на Mac камеру «Ghosted Camera». Выберите её в Zoom, Meet, Teams, Telegram или FaceTime — и исчезайте облаком пыли по сочетанию клавиш, щелчку пальцами или жесту «V».";
+"Move Ghosted to Applications" = "Переместите Ghosted в «Программы»";
 "Move and relaunch" = "Переместить и перезапустить";
-"Install Vanish Camera" = "Установите Vanish Camera";
+"Install Ghosted Camera" = "Установите Ghosted Camera";
 "Install" = "Установить";
 "Open System Settings" = "Открыть Системные настройки";
 "Allow" = "Разрешить";
 "Capture your empty room" = "Снимите пустую комнату";
 "Retake…" = "Переснять…";
 "Open preview…" = "Открыть предпросмотр…";
-"Choose “Vanish Camera” in your call app" = "Выберите «Vanish Camera» в приложении для звонков";
+"Choose “Ghosted Camera” in your call app" = "Выберите «Ghosted Camera» в приложении для звонков";
 "Zoom: Settings → Video → Camera. Google Meet: Settings → Video. Teams: Settings → Devices. Telegram: Settings → Advanced → Video. FaceTime: Video menu." = "Zoom: Настройки → Видео → Камера. Google Meet: Настройки → Видео. Teams: Настройки → Устройства. Telegram: Настройки → Продвинутые → Видео. FaceTime: меню «Видео».";
-"Open Vanish at login (recommended — otherwise call apps show “Open Vanish”)" = "Открывать Vanish при входе (рекомендуется — иначе в звонке будет заглушка «Откройте Vanish»)";
+"Open Ghosted at login (recommended — otherwise call apps show “Open Ghosted”)" = "Открывать Ghosted при входе (рекомендуется — иначе в звонке будет заглушка «Откройте Ghosted»)";
+"%lld of %lld done" = "Готово %lld из %lld";
 "Done" = "Готово";
 "Removed" = "Удалено";
-"Open System Settings → General → Login Items & Extensions → Camera Extensions and turn on Vanish." = "Откройте Системные настройки → Основные → Объекты входа и расширения → Расширения камеры и включите Vanish.";
-"Open System Settings → Privacy & Security, scroll down and click “Allow” next to the message about Vanish." = "Откройте Системные настройки → Конфиденциальность и безопасность, прокрутите вниз и нажмите «Разрешить» рядом с сообщением о Vanish.";
+"Open System Settings → General → Login Items & Extensions → Camera Extensions and turn on Ghosted." = "Откройте Системные настройки → Основные → Объекты входа и расширения → Расширения камеры и включите Ghosted.";
+"Open System Settings → Privacy & Security, scroll down and click “Allow” next to the message about Ghosted." = "Откройте Системные настройки → Конфиденциальность и безопасность, прокрутите вниз и нажмите «Разрешить» рядом с сообщением о Ghosted.";

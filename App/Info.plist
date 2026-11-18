@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Vanish</string>
+	<string>Ghosted</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -32,10 +32,10 @@
 	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
 	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>Vanish uses your camera to produce the Vanish Camera video feed. Video never leaves your Mac.</string>
+	<string>Ghosted uses your camera to produce the Ghosted Camera video feed. Video never leaves your Mac.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Vanish listens for a finger snap to trigger the effect. Audio is analysed on your Mac and never recorded.</string>
+	<string>Ghosted listens for a finger snap to trigger the effect. Audio is analysed on your Mac and never recorded.</string>
 	<key>NSSystemExtensionUsageDescription</key>
-	<string>Installs the Vanish Camera virtual camera.</string>
+	<string>Installs the Ghosted Camera virtual camera.</string>
 </dict>
 </plist>
