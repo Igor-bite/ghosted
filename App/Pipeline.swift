@@ -10,7 +10,7 @@ private let log = Logger(subsystem: "com.vanishcam.Vanish", category: "pipeline"
 /// Owns capture → effect → virtual camera. All mutable state lives on `queue` (the capture frame queue).
 final class Pipeline {
     struct Config: Equatable {
-        var dustEnabled = true
+        var effect: EffectStyle = .dust
         var hybridRoom = true
         var effectDuration: TimeInterval = 1.8
         var vSignEnabled = false
@@ -56,7 +56,7 @@ final class Pipeline {
     private var lastPersonMask: CIImage?
     private var running = false
     private var lastFrameTime: CMTime?
-    private var snapshot: (frame: CVPixelBuffer, mask: CVPixelBuffer, bboxX: SIMD2<Float>)?
+    private var snapshot: (frame: CVPixelBuffer, mask: CVPixelBuffer, bounds: Compositor.PersonBounds)?
     private var roomFrames: [[UInt8]]?
     private var roomCompletion: ((RoomCaptureOutcome) -> Void)?
     private var lastStatus = Status()
@@ -94,7 +94,7 @@ final class Pipeline {
     func setConfig(_ c: Config) {
         queue.async {
             self.config = c
-            self.sm.duration = c.dustEnabled ? c.effectDuration : 0.15
+            self.sm.duration = c.effectDuration
         }
     }
 
@@ -241,8 +241,8 @@ final class Pipeline {
             if case .vanishing = sm.phase { progress = p } else { progress = 1 - p }
             guard effectivePlate != nil, let lb = compositor.makeBuffer() else { compositor.render(live, into: out); break }
             compositor.render(live, into: lb)
-            if config.dustEnabled {
-                renderDust(live: live, liveBuffer: lb, camera: camera, rawMask: rawMask, progress: progress, into: out)
+            if let style = config.effect.shaderStyle {
+                renderEffect(style, live: live, liveBuffer: lb, camera: camera, rawMask: rawMask, progress: progress, into: out)
             } else {
                 let mask = useHybrid ? segmenter.mask(for: lb, size: compositor.size) : nil
                 compositor.render(compositor.crossfade(from: live, to: room(camera: camera, mask: mask), t: progress), into: out)
@@ -277,7 +277,7 @@ final class Pipeline {
         return compositor.roomImage(live: camera, plate: plate, mask: mask, hybrid: config.hybridRoom)
     }
 
-    private func renderDust(live: CIImage, liveBuffer: CVPixelBuffer, camera: CIImage, rawMask: CVPixelBuffer?,
+    private func renderEffect(_ style: DustRenderer.Style, live: CIImage, liveBuffer: CVPixelBuffer, camera: CIImage, rawMask: CVPixelBuffer?,
                             progress: Double, into out: CVPixelBuffer) {
         guard let raw = rawMask ?? segmenter.rawMask(for: liveBuffer),
               let maskBuffer = compositor.makeMaskBuffer(),
@@ -291,12 +291,12 @@ final class Pipeline {
         compositor.renderMask(mask, into: maskBuffer)
         compositor.render(room(camera: camera, mask: useHybrid ? mask : nil), into: roomBuffer)
         if snapshot == nil {
-            snapshot = (liveBuffer, maskBuffer, Compositor.personBoundsX(rawMask: raw))
+            snapshot = (liveBuffer, maskBuffer, Compositor.personBounds(rawMask: raw))
         }
         guard let snapshot else { return }
         dust.render(.init(live: liveBuffer, room: roomBuffer, mask: maskBuffer,
-                          snapshot: snapshot.frame, snapshotMask: snapshot.mask, bboxX: snapshot.bboxX),
-                    progress: Float(progress), into: out)
+                          snapshot: snapshot.frame, snapshotMask: snapshot.mask, bounds: snapshot.bounds),
+                    style: style, progress: Float(progress), into: out)
     }
 
     private func collectRoomFrame(_ pb: CVPixelBuffer) {

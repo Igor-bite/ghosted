@@ -1,12 +1,53 @@
 import Foundation
 
+/// How the person vanishes and appears.
+enum EffectStyle: String, CaseIterable, Identifiable {
+    /// Crumbles into drifting dust.
+    case dust
+    /// Breaks into jittering digital blocks.
+    case glitch
+    /// A glowing scan line sweeps the person away (and back, bottom-up).
+    case beam
+    /// Plain crossfade.
+    case fade
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dust: return String(localized: "Dust")
+        case .glitch: return String(localized: "Glitch")
+        case .beam: return String(localized: "Beam")
+        case .fade: return String(localized: "Fade")
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .dust: return String(localized: "Crumble into drifting dust")
+        case .glitch: return String(localized: "Break up into digital noise")
+        case .beam: return String(localized: "Teleport with a scan line")
+        case .fade: return String(localized: "Soft, calm crossfade")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .dust: return "aqi.medium"
+        case .glitch: return "waveform"
+        case .beam: return "wand.and.rays"
+        case .fade: return "circle.lefthalf.filled"
+        }
+    }
+}
+
 /// User preferences persisted in UserDefaults.
 @MainActor
 final class AppSettings: ObservableObject {
     private let d = UserDefaults.standard
 
     @Published var cameraID: String? { didSet { d.set(cameraID, forKey: "cameraID") } }
-    @Published var dustEnabled: Bool { didSet { d.set(dustEnabled, forKey: "dustEnabled") } }
+    @Published var effectStyle: EffectStyle { didSet { d.set(effectStyle.rawValue, forKey: "effectStyle") } }
     /// false = full replacement with the room snapshot (default), true = live room (hybrid).
     @Published var hybridRoom: Bool { didSet { d.set(hybridRoom, forKey: "hybridRoom") } }
     /// Virtual background id (see BackgroundLibrary); nil = empty-room snapshot from the camera.
@@ -33,7 +74,12 @@ final class AppSettings: ObservableObject {
             "lastHidden": false,
         ])
         cameraID = d.string(forKey: "cameraID")
-        dustEnabled = d.bool(forKey: "dustEnabled")
+        if let raw = d.string(forKey: "effectStyle"), let style = EffectStyle(rawValue: raw) {
+            effectStyle = style
+        } else {
+            // 0.1 had a single dust on/off switch; "off" meant a crossfade.
+            effectStyle = d.bool(forKey: "dustEnabled") ? .dust : .fade
+        }
         hybridRoom = d.bool(forKey: "hybridRoom")
         backgroundID = d.string(forKey: "backgroundID")
         effectDuration = min(3, max(1, d.double(forKey: "effectDuration")))

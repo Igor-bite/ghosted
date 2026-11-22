@@ -17,23 +17,8 @@ struct VanishApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Window(String(localized: "Preview & Room"), id: WindowID.preview) {
-            PreviewWindow()
-                .environmentObject(model)
-                .environmentObject(model.settings)
-        }
-        .windowResizability(.contentSize)
-
-        Window(String(localized: "Welcome to Ghosted"), id: WindowID.onboarding) {
-            OnboardingView()
-                .environmentObject(model)
-                .environmentObject(model.settings)
-                .environmentObject(model.installer)
-        }
-        .windowResizability(.contentSize)
-
-        Window(String(localized: "Ghosted Settings"), id: WindowID.settings) {
-            SettingsView()
+        Window(Brand.name, id: WindowID.main) {
+            MainWindow()
                 .environmentObject(model)
                 .environmentObject(model.settings)
                 .environmentObject(model.installer)
@@ -43,9 +28,7 @@ struct VanishApp: App {
 }
 
 enum WindowID {
-    static let preview = "preview"
-    static let onboarding = "onboarding"
-    static let settings = "settings"
+    static let main = "main"
 }
 
 /// Opens a window and brings the (accessory) app to front.
@@ -63,9 +46,14 @@ struct MenuBarLabel: View {
         Image(model.status.targetHidden ? "MenuBarIconHidden" : "MenuBarIcon")
             .renderingMode(.template)
             .task {
+                #if DEBUG
+                if UserDefaults.standard.string(forKey: "snapshotDir") != nil {
+                    Snapshotter.runIfRequested()
+                    return
+                }
+                #endif
                 if !settings.onboardingDone {
-                    openWindow(id: WindowID.onboarding)
-                    bringToFront()
+                    OpenMainAction(openWindow: openWindow, model: model)(.setup)
                 }
             }
     }

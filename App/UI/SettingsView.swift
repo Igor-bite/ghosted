@@ -12,18 +12,37 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: 12) {
-                    AppIconView(size: 52)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: Brand.name).font(.system(size: 20, weight: .bold, design: .rounded))
-                        Text("Version \(Brand.version)").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    StatusPill(text: model.devicePresent ? String(localized: "Camera installed")
-                                                         : String(localized: "Not installed"),
-                               color: model.devicePresent ? .green : .gray)
+                EffectPicker(selection: $settings.effectStyle)
+                    .padding(.vertical, 4)
+                HStack {
+                    Text("Duration")
+                    Slider(value: $settings.effectDuration, in: 1...3, step: 0.1)
+                    Text(String(format: "%.1f s", settings.effectDuration)).monospacedDigit().frame(width: 44)
                 }
-                .padding(.vertical, 4)
+            } header: {
+                Label("Effect", systemImage: "sparkles")
+            }
+
+            Section {
+                BackgroundPicker(library: model.backgrounds)
+                    .padding(.vertical, 4)
+                if settings.backgroundID == nil {
+                    Picker("Background while vanished", selection: $settings.hybridRoom) {
+                        Text("Full replacement (recommended)").tag(false)
+                        Text("Live room").tag(true)
+                    }
+                    Text(settings.hybridRoom
+                         ? "Live room keeps lights and windows moving, but a faint outline of your silhouette may remain — especially with a virtual background."
+                         : "The whole frame is replaced with the room snapshot. Nothing of you stays visible, even with a virtual background.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("You appear over this background and dissolve into it. No room snapshot needed.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } header: {
+                Label("Background", systemImage: "photo.on.rectangle.angled")
             }
 
             Section {
@@ -59,57 +78,27 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Dust effect", isOn: $settings.dustEnabled)
-                HStack {
-                    Text("Duration")
-                    Slider(value: $settings.effectDuration, in: 1...3, step: 0.1)
-                    Text(String(format: "%.1f s", settings.effectDuration)).monospacedDigit().frame(width: 44)
+                Picker("Camera", selection: Binding(get: { settings.cameraID ?? "" },
+                                                    set: { model.selectCamera($0.isEmpty ? nil : $0) })) {
+                    Text("System default").tag("")
+                    ForEach(model.cameras) { Text($0.name).tag($0.id) }
                 }
-                .disabled(!settings.dustEnabled)
-            } header: {
-                Label("Effect", systemImage: "sparkles")
-            }
-
-            Section {
-                BackgroundPicker(library: model.backgrounds)
-                    .padding(.vertical, 4)
-                if settings.backgroundID == nil {
-                    Picker("Background while vanished", selection: $settings.hybridRoom) {
-                        Text("Full replacement (recommended)").tag(false)
-                        Text("Live room").tag(true)
-                    }
-                    Text(settings.hybridRoom
-                         ? "Live room keeps lights and windows moving, but a faint outline of your silhouette may remain — especially with a virtual background."
-                         : "The whole frame is replaced with the room snapshot. Nothing of you stays visible, even with a virtual background.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text("You appear over this background and dissolve into it. No room snapshot needed.")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            } header: {
-                Label("Background", systemImage: "photo.on.rectangle.angled")
-            }
-
-            Section {
                 Toggle("Open Ghosted at login", isOn: Binding(get: { model.launchAtLogin },
                                                               set: { model.setLaunchAtLogin($0) }))
                 VStack(alignment: .leading, spacing: 4) {
                     Button("Remove Ghosted Camera from this Mac…", role: .destructive) { confirmRemove = true }
                     Text("Do this before deleting the app.").font(.caption).foregroundStyle(.secondary)
                 }
+                LabeledContent("Version") { Text(verbatim: Brand.version).monospacedDigit() }
             } header: {
                 Label("General", systemImage: "gearshape.fill")
             }
         }
         .formStyle(.grouped)
-        .tint(Brand.violet)
-        .frame(width: 520, height: 720)
         .confirmationDialog("Remove Ghosted Camera?", isPresented: $confirmRemove) {
             Button("Remove", role: .destructive) { installer.deactivate() }
         } message: {
-            Text("Call apps will no longer see Ghosted Camera. You can reinstall it from the setup guide.")
+            Text("Call apps will no longer see Ghosted Camera. You can reinstall it from the Setup tab.")
         }
         .onDisappear { stopRecording() }
     }

@@ -1,123 +1,127 @@
 import AVFoundation
 import SwiftUI
 
-struct OnboardingView: View {
+struct SetupView: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var installer: ExtensionInstaller
-    @Environment(\.openWindow) private var openWindow
-    @Environment(\.dismiss) private var dismiss
     @State private var moveError: String?
 
-    private var steps: [Bool] {
-        [installer.isInAppsFolder, model.devicePresent, model.cameraAuthorized,
-         model.status.hasPlate, (model.clients?.count ?? 0) > 0]
-    }
+    private var steps: [Bool] { model.setupSteps }
     private var doneCount: Int { steps.filter { $0 }.count }
     private var currentStep: Int { (steps.firstIndex(of: false) ?? steps.count) + 1 }
 
     var body: some View {
         VStack(spacing: 0) {
             hero
-            VStack(alignment: .leading, spacing: 10) {
-                step(1, title: "Move Ghosted to Applications") {
-                    Button("Move and relaunch") { moveToApplications() }
-                        .buttonStyle(.borderedProminent)
-                    if let moveError { Text(moveError).font(.caption).foregroundStyle(.red) }
-                }
-
-                step(2, title: "Install Ghosted Camera") {
-                    HStack {
-                        Button("Install") { installer.activate() }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    step(1, title: "Move Ghosted to Applications") {
+                        Text("macOS installs camera extensions only from the Applications folder.")
+                            .font(.callout).foregroundStyle(.secondary)
+                        Button("Move and relaunch") { moveToApplications() }
                             .buttonStyle(.borderedProminent)
-                            .disabled(!installer.isInAppsFolder || installer.state == .installing)
-                        installStateText
+                        if let moveError { Text(moveError).font(.caption).foregroundStyle(.red) }
                     }
-                    if installer.state == .needsApproval {
-                        Callout(verbatim: approvalHint, systemImage: "lock.shield.fill", tint: Brand.violet)
-                        Button("Open System Settings") { openApprovalSettings() }
+
+                    step(2, title: "Install Ghosted Camera") {
+                        HStack {
+                            Button("Install") { installer.activate() }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(!installer.isInAppsFolder || installer.state == .installing)
+                            installStateText
+                        }
+                        if !installer.isInAppsFolder {
+                            Text("Finish step 1 first.").font(.caption).foregroundStyle(.secondary)
+                        }
+                        if installer.state == .needsApproval {
+                            Callout(verbatim: approvalHint, systemImage: "lock.shield.fill", tint: Brand.violet)
+                            Button("Open System Settings") { openApprovalSettings() }
+                        }
                     }
-                }
 
-                step(3, title: "Allow camera access") {
-                    Button("Allow") { model.requestCameraAccess() }
-                        .buttonStyle(.borderedProminent)
-                }
+                    step(3, title: "Give Ghosted access to the camera") {
+                        Button("Allow") { model.requestCameraAccess() }
+                            .buttonStyle(.borderedProminent)
+                    }
 
-                step(4, title: "Capture your empty room or pick a background", keepContent: true) {
-                    HStack {
-                        Button(model.status.hasPlate && !model.status.usingVirtualBackground
-                               ? "Retake…" : "Capture room…") {
-                            openWindow(id: WindowID.preview)
-                            bringToFront()
+                    step(4, title: "Capture your empty room or pick a background", keepContent: true) {
+                        Text("Ghosted shows the empty room (or a picture) where you were. Capture the room with the camera where it will stay during calls, or pick a background.")
+                            .font(.callout).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        BackgroundPicker(library: model.backgrounds)
+                        Button {
+                            model.selectBackground(nil)
+                            model.mainTab = .studio
+                        } label: {
+                            Label(model.roomThumbnail == nil ? "Capture room in Studio…" : "Retake room in Studio…",
+                                  systemImage: "camera.viewfinder")
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(model.status.hasPlate ? .secondary : Brand.violet)
                         .disabled(!model.cameraAuthorized)
-                        Button("Choose background…") {
-                            openWindow(id: WindowID.settings)
-                            bringToFront()
-                        }
-                        .buttonStyle(.bordered)
-                        if model.status.usingVirtualBackground {
-                            Label(model.backgroundName, systemImage: "photo.fill")
-                                .font(.callout).foregroundStyle(.secondary)
-                        }
+                    }
+
+                    step(5, title: "Choose “Ghosted Camera” in your call app", keepContent: true) {
+                        Text("Zoom: Settings → Video → Camera. Google Meet: Settings → Video. Teams: Settings → Devices. Telegram: Settings → Advanced → Video. FaceTime: Video menu.")
+                            .font(.callout).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-
-                step(5, title: "Choose “Ghosted Camera” in your call app", keepContent: true) {
-                    Text("Zoom: Settings → Video → Camera. Google Meet: Settings → Video. Teams: Settings → Devices. Telegram: Settings → Advanced → Video. FaceTime: Video menu.")
-                        .font(.callout).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Toggle("Open Ghosted at login (recommended — otherwise call apps show “Open Ghosted”)",
-                       isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .padding(.top, 6)
-
-                HStack {
-                    Text("\(doneCount) of \(steps.count) done")
-                        .font(.callout).foregroundStyle(.secondary).monospacedDigit()
-                    Spacer()
-                    Button("Done") {
-                        settings.onboardingDone = true
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .keyboardShortcut(.defaultAction)
-                }
-                .padding(.top, 4)
+                .padding(18)
             }
-            .padding(22)
+            Divider()
+            footer
         }
-        .frame(width: 600)
-        .tint(Brand.violet)
+    }
+
+    private var footer: some View {
+        HStack(spacing: 14) {
+            Toggle("Open Ghosted at login", isOn: Binding(get: { model.launchAtLogin },
+                                                           set: { model.setLaunchAtLogin($0) }))
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help(Text("Recommended — otherwise call apps show “Open Ghosted” instead of your video."))
+            Spacer()
+            Text("\(doneCount) of \(steps.count) done")
+                .font(.callout).foregroundStyle(.secondary).monospacedDigit()
+            Button {
+                settings.onboardingDone = true
+                model.mainTab = .studio
+            } label: {
+                Text(model.essentialSetupDone ? "Go to Studio" : "Skip for now")
+                    .padding(.horizontal, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(model.essentialSetupDone ? Brand.violet : .secondary)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .background(.bar)
     }
 
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
             Brand.heroGradient
-            DustField(count: 70, from: 0.7)
-            HStack(spacing: 16) {
-                AppIconView(size: 76)
+            DustField(count: 60, from: 0.7)
+            HStack(spacing: 14) {
+                AppIconView(size: 58)
                     .shadow(color: .black.opacity(0.4), radius: 10, y: 4)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Set up Ghosted")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                    Text("Ghosted adds a “Ghosted Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish in a cloud of dust with a shortcut, a snap or a “V” sign.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(model.essentialSetupDone ? "You’re all set" : "Set up Ghosted")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                    Text("Ghosted adds a “Ghosted Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish with a shortcut, a snap or a “V” sign.")
                         .font(.callout)
                         .opacity(0.8)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: 380, alignment: .leading)
+                .frame(maxWidth: 520, alignment: .leading)
                 .foregroundStyle(.white)
             }
-            .padding(22)
-            .padding(.bottom, 14)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 24)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -129,11 +133,11 @@ struct OnboardingView: View {
                 }
             }
             .frame(height: 5)
-            .padding(.horizontal, 22)
-            .padding(.bottom, 14)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 10)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: doneCount)
         }
-        .frame(height: 168)
+        .frame(height: 118)
         .environment(\.colorScheme, .dark)
     }
 

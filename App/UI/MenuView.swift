@@ -30,7 +30,7 @@ struct MenuView: View {
                     } label: { Text("Camera").fixedSize() }
                     Divider().padding(.leading, 38)
                     row("photo.fill") {
-                        BackgroundMenu(library: model.backgrounds) { open(WindowID.settings) }
+                        BackgroundMenu(library: model.backgrounds) { open(.settings) }
                             .frame(maxWidth: 160, alignment: .trailing)
                     } label: { Text("Background").fixedSize() }
                     if settings.backgroundID == nil {
@@ -49,7 +49,10 @@ struct MenuView: View {
                         } label: { Text("Room mode").fixedSize() }
                     }
                     Divider().padding(.leading, 38)
-                    toggleRow("sparkles", "Dust effect", isOn: $settings.dustEnabled)
+                    row(settings.effectStyle.systemImage) {
+                        EffectMenu(selection: $settings.effectStyle)
+                            .frame(maxWidth: 130)
+                    } label: { Text("Effect").fixedSize() }
                     Divider().padding(.leading, 38)
                     toggleRow("hand.tap.fill", "Vanish on finger snap",
                               isOn: Binding(get: { settings.snapEnabled }, set: { model.setSnapEnabled($0) }))
@@ -104,12 +107,12 @@ struct MenuView: View {
 
     @ViewBuilder private var notices: some View {
         if !model.status.hasPlate {
-            Button { open(WindowID.preview) } label: {
+            Button { open(.studio) } label: {
                 Callout(text: "Capture the empty room to enable vanishing.", systemImage: "camera.viewfinder")
             }
             .buttonStyle(.plain)
         } else if model.status.plateCameraMismatch {
-            Button { open(WindowID.preview) } label: {
+            Button { open(.studio) } label: {
                 Callout(text: "Room snapshot was taken with another camera.")
             }
             .buttonStyle(.plain)
@@ -119,7 +122,7 @@ struct MenuView: View {
     private var installHint: some View {
         VStack(alignment: .leading, spacing: 10) {
             Callout(text: "Ghosted Camera is not installed yet.", systemImage: "video.slash.fill", tint: Brand.violet)
-            Button { open(WindowID.onboarding) } label: {
+            Button { open(.setup) } label: {
                 HStack {
                     Image(systemName: "wand.and.stars")
                     Text("Open setup guide")
@@ -161,9 +164,9 @@ struct MenuView: View {
 
     private var footer: some View {
         HStack(spacing: 2) {
-            footerButton("Preview & Room…", icon: "rectangle.inset.filled.and.person.filled") { open(WindowID.preview) }
-            footerButton("Setup guide…", icon: "list.bullet.clipboard") { open(WindowID.onboarding) }
-            footerButton("Settings…", icon: "gearshape") { open(WindowID.settings) }
+            footerButton("Studio…", icon: MainTab.studio.systemImage) { open(.studio) }
+            footerButton("Setup…", icon: MainTab.setup.systemImage) { open(.setup) }
+            footerButton("Settings…", icon: MainTab.settings.systemImage) { open(.settings) }
             Spacer()
             footerButton("Quit", icon: "power") { NSApp.terminate(nil) }
         }
@@ -206,9 +209,8 @@ struct MenuView: View {
         return String(localized: "Select “Ghosted Camera” in your call app")
     }
 
-    private func open(_ id: String) {
-        openWindow(id: id)
-        bringToFront()
+    private func open(_ tab: MainTab) {
+        OpenMainAction(openWindow: openWindow, model: model)(tab)
     }
 }
 

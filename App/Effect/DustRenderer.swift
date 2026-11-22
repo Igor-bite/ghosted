@@ -9,14 +9,22 @@ struct DustParams {
     var size: SIMD2<Float>
     var wind: SIMD2<Float>
     var bboxX: SIMD2<Float>
+    var bboxY: SIMD2<Float>
     var gridStep: UInt32
     var gridWidth: UInt32
     var pointSize: Float
-    var pad: Float = 0
+    var style: UInt32
 }
 
-/// GPU part of the dust effect: dissolve pass + particle pass into an output pixel buffer.
+/// GPU part of the shader effects: dissolve pass (+ particle pass for dust) into an output pixel buffer.
 final class DustRenderer {
+    /// Matches `style` in Dust.metal.
+    enum Style: UInt32 {
+        case dust = 0
+        case glitch = 1
+        case beam = 2
+    }
+
     let device: MTLDevice
     private let queue: MTLCommandQueue
     private let dissolvePipeline: MTLRenderPipelineState
@@ -62,11 +70,11 @@ final class DustRenderer {
         var mask: CVPixelBuffer          // OneComponent8, live mask
         var snapshot: CVPixelBuffer      // frame at animation start
         var snapshotMask: CVPixelBuffer  // OneComponent8
-        var bboxX: SIMD2<Float>          // person bbox (uv) at animation start
+        var bounds: Compositor.PersonBounds  // person bbox (uv) at animation start
     }
 
     /// `progress`: 0 = person intact, 1 = fully dust.
-    func render(_ inputs: Inputs, progress: Float, into output: CVPixelBuffer) {
+    func render(_ inputs: Inputs, style: Style, progress: Float, into output: CVPixelBuffer) {
         guard let live = texture(inputs.live, .bgra8Unorm),
               let room = texture(inputs.room, .bgra8Unorm),
               let mask = texture(inputs.mask, .r8Unorm),
@@ -81,9 +89,11 @@ final class DustRenderer {
         var params = DustParams(progress: progress, life: Self.life,
                                 size: SIMD2(Float(w), Float(h)),
                                 wind: SIMD2(1.0, -0.35),
-                                bboxX: inputs.bboxX,
+                                bboxX: inputs.bounds.x,
+                                bboxY: inputs.bounds.y,
                                 gridStep: Self.gridStep, gridWidth: gridW,
-                                pointSize: Float(Self.gridStep) * 1.6)
+                                pointSize: Float(Self.gridStep) * 1.6,
+                                style: style.rawValue)
 
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = out
@@ -98,11 +108,13 @@ final class DustRenderer {
         enc.setFragmentBytes(&params, length: MemoryLayout<DustParams>.stride, index: 0)
         enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
 
-        enc.setRenderPipelineState(particlePipeline)
-        enc.setVertexTexture(snap, index: 0)
-        enc.setVertexTexture(snapMask, index: 1)
-        enc.setVertexBytes(&params, length: MemoryLayout<DustParams>.stride, index: 0)
-        enc.drawPrimitives(type: .point, vertexStart: 0, vertexCount: Int(gridW * gridH))
+        if style != .glitch {
+            enc.setRenderPipelineState(particlePipeline)
+            enc.setVertexTexture(snap, index: 0)
+            enc.setVertexTexture(snapMask, index: 1)
+            enc.setVertexBytes(&params, length: MemoryLayout<DustParams>.stride, index: 0)
+            enc.drawPrimitives(type: .point, vertexStart: 0, vertexCount: Int(gridW * gridH))
+        }
         enc.endEncoding()
 
         cmd.commit()
@@ -115,5 +127,17 @@ final class DustRenderer {
         CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, pb, nil, format,
                                                   CVPixelBufferGetWidth(pb), CVPixelBufferGetHeight(pb), 0, &tex)
         return tex.flatMap(CVMetalTextureGetTexture)
+    }
+}
+
+extension EffectStyle {
+    /// Shader style, or nil for the Core Image crossfade.
+    var shaderStyle: DustRenderer.Style? {
+        switch self {
+        case .dust: return .dust
+        case .glitch: return .glitch
+        case .beam: return .beam
+        case .fade: return nil
+        }
     }
 }

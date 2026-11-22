@@ -30,6 +30,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var cameras: [CameraInfo] = []
     @Published private(set) var cameraAuthorized = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
     @Published var previewOpen = false { didSet { updateDemand() } }
+    /// Selected tab of the main window.
+    @Published var mainTab: MainTab = .studio
     @Published private(set) var roomCapture: RoomCaptureState = .idle
     @Published private(set) var message: String?
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -94,6 +96,12 @@ final class AppModel: ObservableObject {
     }
 
     func requestCameraAccess() {
+        // Once denied, macOS never asks again: send the user to the privacy pane instead.
+        let current = AVCaptureDevice.authorizationStatus(for: .video)
+        if current == .denied || current == .restricted {
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")!)
+            return
+        }
         AVCaptureDevice.requestAccess(for: .video) { granted in
             Task { @MainActor in
                 self.cameraAuthorized = granted
@@ -210,7 +218,7 @@ final class AppModel: ObservableObject {
 
     private func applySettings() {
         applyBackground()
-        pipeline?.setConfig(.init(dustEnabled: settings.dustEnabled,
+        pipeline?.setConfig(.init(effect: settings.effectStyle,
                                   hybridRoom: settings.hybridRoom,
                                   effectDuration: settings.effectDuration,
                                   vSignEnabled: settings.vSignEnabled))

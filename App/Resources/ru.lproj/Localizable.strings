@@ -7,16 +7,13 @@
 "Room snapshot was taken with another camera." = "Снимок комнаты сделан другой камерой — переснимите.";
 "Camera" = "Камера";
 "System default" = "По умолчанию";
-"Dust effect" = "Эффект пыли";
 "Background" = "Фон";
 "Full" = "Полная";
 "Live room: lights and windows keep moving; a faint outline may remain." = "Живая комната: свет и окна двигаются, может оставаться слабый контур.";
 "Full replacement: the whole frame is the room snapshot." = "Полная подмена: весь кадр — снимок комнаты.";
 "Vanish on finger snap" = "Исчезать по щелчку пальцами";
 "Vanish on “V” gesture" = "Исчезать по жесту «V»";
-"Preview & Room…" = "Предпросмотр и комната…";
 "Settings…" = "Настройки…";
-"Setup guide…" = "Мастер настройки…";
 "Quit" = "Выйти";
 "Ghosted Camera is not installed yet." = "Ghosted Camera ещё не установлена.";
 "Open setup guide" = "Открыть мастер настройки";
@@ -36,11 +33,7 @@
 "Microphone access is needed for snap detection." = "Для распознавания щелчка нужен доступ к микрофону.";
 
 /* Preview */
-"Preview & Room" = "Предпросмотр и комната";
-"Capture empty room" = "Снять пустую комнату";
-"Retake empty room" = "Переснять комнату";
 "Space" = "Пробел";
-"Don’t move the camera or change the lighting after capturing the room." = "После снимка не двигайте камеру и не меняйте освещение.";
 "No room snapshot" = "Комната не снята";
 "Room taken with another camera" = "Комната снята другой камерой";
 "Room ready" = "Комната готова";
@@ -53,8 +46,6 @@
 "Could not capture the room. Try again." = "Не удалось снять комнату. Попробуйте ещё раз.";
 
 /* Settings */
-"Ghosted Settings" = "Настройки Ghosted";
-"Version %@" = "Версия %@";
 "Camera installed" = "Камера установлена";
 "Trigger" = "Запуск";
 "Press keys…" = "Нажмите клавиши…";
@@ -75,27 +66,19 @@
 "Do this before deleting the app." = "Сделайте это перед удалением приложения.";
 "Remove Ghosted Camera?" = "Удалить Ghosted Camera?";
 "Remove" = "Удалить";
-"Call apps will no longer see Ghosted Camera. You can reinstall it from the setup guide." = "Приложения для звонков перестанут видеть Ghosted Camera. Установить её снова можно из мастера настройки.";
 "Use ⌃ or ⌘ in the shortcut — macOS blocks ⌥-only global shortcuts." = "Добавьте ⌃ или ⌘ — macOS блокирует глобальные сочетания только с ⌥.";
 
 /* Onboarding */
-"Welcome to Ghosted" = "Добро пожаловать в Ghosted";
 "Set up Ghosted" = "Настройка Ghosted";
-"Ghosted adds a “Ghosted Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish in a cloud of dust with a shortcut, a snap or a “V” sign." = "Ghosted добавляет на Mac камеру «Ghosted Camera». Выберите её в Zoom, Meet, Teams, Telegram или FaceTime — и исчезайте облаком пыли по сочетанию клавиш, щелчку пальцами или жесту «V».";
 "Move Ghosted to Applications" = "Переместите Ghosted в «Программы»";
 "Move and relaunch" = "Переместить и перезапустить";
 "Install Ghosted Camera" = "Установите Ghosted Camera";
 "Install" = "Установить";
 "Open System Settings" = "Открыть Системные настройки";
 "Allow" = "Разрешить";
-"Capture your empty room" = "Снимите пустую комнату";
-"Retake…" = "Переснять…";
-"Open preview…" = "Открыть предпросмотр…";
 "Choose “Ghosted Camera” in your call app" = "Выберите «Ghosted Camera» в приложении для звонков";
 "Zoom: Settings → Video → Camera. Google Meet: Settings → Video. Teams: Settings → Devices. Telegram: Settings → Advanced → Video. FaceTime: Video menu." = "Zoom: Настройки → Видео → Камера. Google Meet: Настройки → Видео. Teams: Настройки → Устройства. Telegram: Настройки → Продвинутые → Видео. FaceTime: меню «Видео».";
-"Open Ghosted at login (recommended — otherwise call apps show “Open Ghosted”)" = "Открывать Ghosted при входе (рекомендуется — иначе в звонке будет заглушка «Откройте Ghosted»)";
 "%lld of %lld done" = "Готово %lld из %lld";
-"Done" = "Готово";
 "Removed" = "Удалено";
 "Open System Settings → General → Login Items & Extensions → Camera Extensions and turn on Ghosted." = "Откройте Системные настройки → Основные → Объекты входа и расширения → Расширения камеры и включите Ghosted.";
 "Open System Settings → Privacy & Security, scroll down and click “Allow” next to the message about Ghosted." = "Откройте Системные настройки → Конфиденциальность и безопасность, прокрутите вниз и нажмите «Разрешить» рядом с сообщением о Ghosted.";
@@ -111,11 +94,43 @@
 "This file can’t be used as a background." = "Этот файл нельзя использовать как фон.";
 "You appear over this background and dissolve into it. No room snapshot needed." = "Вы видны поверх этого фона и растворяетесь в нём. Снимок комнаты не нужен.";
 "Capture your empty room or pick a background" = "Снимите пустую комнату или выберите фон";
-"Capture room…" = "Снять комнату…";
-"Choose background…" = "Выбрать фон…";
 "Aurora" = "Сияние";
 "Studio" = "Студия";
 "Sunset" = "Закат";
 "Ocean" = "Океан";
 "Forest" = "Лес";
 "Midnight" = "Полночь";
+
+/* 0.2: effects and main window */
+"%@ (⌘%@)" = "%@ (⌘%@)";
+"Beam" = "Луч";
+"Break up into digital noise" = "Рассыпаться цифровыми помехами";
+"Call apps will no longer see Ghosted Camera. You can reinstall it from the Setup tab." = "Приложения для звонков перестанут видеть Ghosted Camera. Установить её снова можно на вкладке «Настройка».";
+"Capture room" = "Снять комнату";
+"Capture room in Studio…" = "Снять комнату в Студии…";
+"Capture the empty room to vanish" = "Снимите пустую комнату, чтобы исчезать";
+"Crumble into drifting dust" = "Рассыпаться летящей пылью";
+"Dust" = "Пыль";
+"Fade" = "Растворение";
+"Finish step 1 first." = "Сначала выполните шаг 1.";
+"Ghosted adds a “Ghosted Camera” to your Mac. Pick it in Zoom, Meet, Teams, Telegram or FaceTime, then vanish with a shortcut, a snap or a “V” sign." = "Ghosted добавляет на Mac камеру «Ghosted Camera». Выберите её в Zoom, Meet, Teams, Telegram или FaceTime — и исчезайте по сочетанию клавиш, щелчку пальцами или жесту «V».";
+"Ghosted shows the empty room (or a picture) where you were. Capture the room with the camera where it will stay during calls, or pick a background." = "На вашем месте Ghosted показывает пустую комнату или картинку. Снимите комнату, поставив камеру так, как она будет стоять во время звонков, или выберите фон.";
+"Glitch" = "Глитч";
+"Go to Studio" = "Перейти в Студию";
+"Pick a background…" = "Выбрать фон…";
+"Place the camera where it stays during calls. After a 5-second countdown, step out of the frame." = "Поставьте камеру так, как она будет стоять во время звонков. После 5-секундного отсчёта выйдите из кадра.";
+"Recommended — otherwise call apps show “Open Ghosted” instead of your video." = "Рекомендуется — иначе приложения для звонков покажут «Откройте Ghosted» вместо вашего видео.";
+"Retake room" = "Переснять комнату";
+"Retake room in Studio…" = "Переснять комнату в Студии…";
+"Settings" = "Настройки";
+"Setup" = "Настройка";
+"Setup…" = "Настройка…";
+"Skip for now" = "Пропустить";
+"Soft, calm crossfade" = "Мягкое плавное исчезновение";
+"Step out of the frame during the countdown. Don’t move the camera or change the lighting afterwards." = "Во время отсчёта выйдите из кадра. Потом не двигайте камеру и не меняйте освещение.";
+"Studio…" = "Студия…";
+"Teleport with a scan line" = "Телепорт сканирующим лучом";
+"Version" = "Версия";
+"You’re all set" = "Всё готово";
+"macOS installs camera extensions only from the Applications folder." = "macOS устанавливает расширения камеры только из папки «Программы».";
+"Give Ghosted access to the camera" = "Разрешите Ghosted доступ к камере";

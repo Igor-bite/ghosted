@@ -1,33 +1,32 @@
 import SwiftUI
 
-struct PreviewWindow: View {
+struct StudioView: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var settings: AppSettings
 
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                PreviewLayerView(sink: model.preview)
-                overlay
-                VStack {
-                    HStack {
-                        roomChip
-                        Spacer()
-                        if model.status.targetHidden {
-                            hudChip(Text("Vanished"), systemImage: "sparkles", tint: Brand.violet)
+                Color.black
+                ZStack {
+                    PreviewLayerView(sink: model.preview)
+                    overlay
+                    VStack {
+                        HStack {
+                            roomChip
+                            Spacer()
+                            if model.status.targetHidden {
+                                hudChip(Text("Vanished"), systemImage: "sparkles", tint: Brand.violet)
+                            }
                         }
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(12)
                 }
-                .padding(12)
+                .aspectRatio(16.0 / 9.0, contentMode: .fit)
             }
-            .aspectRatio(16.0 / 9.0, contentMode: .fit)
-            .frame(minWidth: 640)
-            .background(Color.black)
-
             toolbar
         }
-        .tint(Brand.violet)
         .onAppear { model.previewOpen = true }
         .onDisappear { model.previewOpen = false }
     }
@@ -37,42 +36,41 @@ struct PreviewWindow: View {
     private var toolbar: some View {
         HStack(spacing: 12) {
             Button {
+                model.selectBackground(nil)
                 model.resetRoomCaptureState()
                 model.startRoomCapture()
             } label: {
-                Label(model.status.hasPlate ? "Retake empty room" : "Capture empty room",
+                Label(model.roomThumbnail != nil ? "Retake room" : "Capture room",
                       systemImage: "camera.viewfinder")
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 2)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
             .disabled(isCapturing || !model.cameraAuthorized)
+            .help(Text("Step out of the frame during the countdown. Don’t move the camera or change the lighting afterwards."))
+            .frame(width: 190, alignment: .leading)
+
+            Spacer()
 
             Button {
                 model.toggle()
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: model.status.targetHidden ? "person.fill.viewfinder" : "sparkles")
-                    Text(model.status.targetHidden ? "Appear" : "Vanish")
+                    Text(model.status.targetHidden ? "Appear" : "Vanish").lineLimit(1).fixedSize()
                     KeyCap(text: String(localized: "Space"), onDark: true)
                 }
             }
             .buttonStyle(HeroButtonStyle(hidden: model.status.targetHidden))
-            .frame(width: 190)
+            .frame(width: 220)
             .keyboardShortcut(.space, modifiers: [])
             .disabled(!model.status.hasPlate && !model.status.targetHidden)
 
             Spacer()
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Image(systemName: "info.circle")
-                Text("Don’t move the camera or change the lighting after capturing the room.")
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: 260, alignment: .leading)
+            EffectMenu(selection: $settings.effectStyle)
+                .frame(width: 150)
+                .frame(width: 190, alignment: .trailing)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -165,9 +163,38 @@ struct PreviewWindow: View {
             case .done(let outcome):
                 resultBanner(outcome)
             case .idle:
-                EmptyView()
+                if !model.status.hasPlate { needsRoomPrompt }
             }
         }
+    }
+
+    private var needsRoomPrompt: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "camera.viewfinder")
+                .font(.system(size: 34))
+                .foregroundStyle(Brand.appearGradient)
+            Text("Capture the empty room to vanish")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+            Text("Place the camera where it stays during calls. After a 5-second countdown, step out of the frame.")
+                .font(.callout)
+                .foregroundStyle(.white.opacity(0.75))
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 360)
+            HStack(spacing: 10) {
+                Button("Capture room") {
+                    model.resetRoomCaptureState()
+                    model.startRoomCapture()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                Button("Pick a background…") { model.mainTab = .settings }
+                    .controlSize(.large)
+            }
+        }
+        .padding(24)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .environment(\.colorScheme, .dark)
     }
 
     private func resultBanner(_ outcome: Pipeline.RoomCaptureOutcome) -> some View {

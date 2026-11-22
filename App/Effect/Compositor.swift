@@ -198,23 +198,32 @@ final class Compositor {
         ciContext.render(image, to: pb, bounds: CGRect(origin: .zero, size: size), colorSpace: nil)
     }
 
-    /// Horizontal extent of the person in uv (0...1, x left→right) from a Vision raw mask.
-    static func personBoundsX(rawMask: CVPixelBuffer) -> SIMD2<Float> {
+    /// Extent of the person in uv (0...1, x left→right, y top→bottom).
+    struct PersonBounds {
+        var x = SIMD2<Float>(0, 1)
+        var y = SIMD2<Float>(0, 1)
+    }
+
+    /// Person bounding box from a Vision raw mask (rows top-first, like texture uv).
+    static func personBounds(rawMask: CVPixelBuffer) -> PersonBounds {
         CVPixelBufferLockBaseAddress(rawMask, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(rawMask, .readOnly) }
-        guard let base = CVPixelBufferGetBaseAddress(rawMask) else { return SIMD2(0, 1) }
+        guard let base = CVPixelBufferGetBaseAddress(rawMask) else { return PersonBounds() }
         let w = CVPixelBufferGetWidth(rawMask), h = CVPixelBufferGetHeight(rawMask)
         let stride = CVPixelBufferGetBytesPerRow(rawMask)
-        var minX = w, maxX = -1
+        var minX = w, maxX = -1, minY = h, maxY = -1
         let p = base.assumingMemoryBound(to: UInt8.self)
         for y in Swift.stride(from: 0, to: h, by: 2) {
             let row = p + y * stride
             for x in Swift.stride(from: 0, to: w, by: 2) where row[x] > 127 {
                 if x < minX { minX = x }
                 if x > maxX { maxX = x }
+                if y < minY { minY = y }
+                if y > maxY { maxY = y }
             }
         }
-        guard maxX >= minX else { return SIMD2(0, 1) }
-        return SIMD2(Float(minX) / Float(w), Float(maxX + 1) / Float(w))
+        guard maxX >= minX, maxY >= minY else { return PersonBounds() }
+        return PersonBounds(x: SIMD2(Float(minX) / Float(w), Float(maxX + 1) / Float(w)),
+                            y: SIMD2(Float(minY) / Float(h), Float(maxY + 1) / Float(h)))
     }
 }
