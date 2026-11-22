@@ -12,6 +12,7 @@ Design: `docs/superpowers/specs/2026-11-16-vanish-design.md` · Plan: `docs/supe
 
 ```bash
 brew tap Igor-bite/ghosted https://github.com/Igor-bite/ghosted
+brew trust igor-bite/ghosted   # newer Homebrew asks to trust third-party taps
 brew install --cask ghosted
 ```
 

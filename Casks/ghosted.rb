@@ -7,7 +7,7 @@ cask "ghosted" do
   desc "Virtual camera that lets you vanish into dust on video calls"
   homepage "https://github.com/Igor-bite/ghosted"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "Ghosted.app"
 
