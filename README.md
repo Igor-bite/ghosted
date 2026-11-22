@@ -16,7 +16,7 @@ brew trust igor-bite/ghosted   # newer Homebrew asks to trust third-party taps
 brew install --cask ghosted
 ```
 
-Or download `Ghosted-<version>.zip` from [Releases](https://github.com/Igor-bite/ghosted/releases), unzip and move `Ghosted.app` to `/Applications`. The app is signed with Developer ID and notarized. On first launch approve the camera extension (macOS 15+: System Settings → General → Login Items & Extensions → Camera Extensions; macOS 13–14: Privacy & Security → Allow).
+Or download `Ghosted-<version>.dmg` from [Releases](https://github.com/Igor-bite/ghosted/releases), open it and drag `Ghosted.app` to `Applications`. The app is signed with Developer ID and notarized. On first launch approve the camera extension (macOS 15+: System Settings → General → Login Items & Extensions → Camera Extensions; macOS 13–14: Privacy & Security → Allow).
 
 ## Layout
 
@@ -46,5 +46,11 @@ Signing: team `4D7YJ8BY8H`, automatic signing. A Debug build needs this Mac regi
 2. Archive: `xcodebuild -project Vanish.xcodeproj -scheme Vanish -configuration Release -archivePath build/release/Ghosted.xcarchive -allowProvisioningUpdates archive`.
 3. Export with Developer ID and upload to notarization (`Tools/ExportOptions.plist`): `xcodebuild -exportArchive -archivePath build/release/Ghosted.xcarchive -exportOptionsPlist Tools/ExportOptions.plist -exportPath build/release/export -allowProvisioningUpdates`.
 4. Fetch the stapled app: `xcodebuild -exportNotarizedApp -archivePath build/release/Ghosted.xcarchive -exportPath build/release/notarized`.
-5. `ditto -c -k --sequesterRsrc --keepParent build/release/notarized/Ghosted.app Ghosted-<version>.zip`, publish it with `gh release create v<version>`.
-6. Update `version` and `sha256` (`shasum -a 256`) in `Casks/ghosted.rb`.
+5. Zip for Homebrew: `ditto -c -k --sequesterRsrc --keepParent build/release/notarized/Ghosted.app Ghosted-<version>.zip`.
+6. DMG: copy the notarized app and an `Applications` symlink into a folder, then
+   `hdiutil create -volname "Ghosted <version>" -srcfolder <folder> -fs HFS+ -format UDZO -imagekey zlib-level=9 Ghosted-<version>.dmg`,
+   `codesign --sign "Developer ID Application: Igor Klyuzhev (4D7YJ8BY8H)" --timestamp Ghosted-<version>.dmg`,
+   `xcrun notarytool submit Ghosted-<version>.dmg --keychain-profile ghosted-notary --wait`, `xcrun stapler staple Ghosted-<version>.dmg`.
+   One-time setup: `xcrun notarytool store-credentials ghosted-notary --apple-id <Apple ID> --team-id 4D7YJ8BY8H` (app-specific password).
+7. Publish both: `gh release create v<version> Ghosted-<version>.zip Ghosted-<version>.dmg`.
+8. Update `version` and `sha256` (`shasum -a 256`) in `Casks/ghosted.rb`.

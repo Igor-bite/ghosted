@@ -63,6 +63,9 @@ final class AppModel: ObservableObject {
         pipeline.selectCamera(settings.cameraID)
 
         snap.onSnap = { [weak self] in self?.toggle(fromGesture: true) }
+        // Snap trigger is opt-in: never touch the microphone (and never prompt) at launch
+        // unless access was already granted when the user turned it on.
+        if settings.snapEnabled && !Self.micAuthorized { settings.snapEnabled = false }
 
         settings.objectWillChange
             .debounce(for: .milliseconds(50), scheduler: RunLoop.main)
@@ -218,13 +221,17 @@ final class AppModel: ObservableObject {
             hotKeyFailed = hotKey == nil
         }
         snap.threshold = settings.snapThreshold
-        if settings.snapEnabled && !snap.isRunning {
+        if settings.snapEnabled && Self.micAuthorized && !snap.isRunning {
             do { try snap.start() } catch { flash(error.localizedDescription) }
         } else if !settings.snapEnabled && snap.isRunning {
             snap.stop()
         }
     }
     private var hotKeyShortcut: Shortcut?
+
+    private static var micAuthorized: Bool {
+        AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    }
 
     private func poll() {
         devicePresent = VirtualCameraSink.isDevicePresent
