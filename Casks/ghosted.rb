@@ -1,6 +1,6 @@
 cask "ghosted" do
-  version "0.2.0"
-  sha256 "831951268fbed18473778b408c117a16b1240bda69c6ec54401d8557d8c0079a"
+  version "0.2.1"
+  sha256 "739b357dd7cb60fac1b97c900aee124385ed49adf880faf9794171a85b1c127b"
 
   url "https://github.com/Igor-bite/ghosted/releases/download/v#{version}/Ghosted-#{version}.zip"
   name "Ghosted"
