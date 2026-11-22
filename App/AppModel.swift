@@ -81,6 +81,9 @@ final class AppModel: ObservableObject {
             Task { @MainActor in self?.poll() }
         }
         poll()
+        // Keep the installed camera extension in step with this app: after an update the old one stays
+        // active until an activation request is made. macOS replaces it only if the bundled version differs.
+        if installer.isInAppsFolder && devicePresent { installer.activate() }
     }
 
     // MARK: Actions
