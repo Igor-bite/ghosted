@@ -8,6 +8,15 @@ The product is named **Ghosted**; the code, targets, module and bundle IDs (`com
 
 Design: `docs/superpowers/specs/2026-11-16-vanish-design.md` · Plan: `docs/superpowers/plans/2026-11-16-vanish.md`
 
+## Install
+
+```bash
+brew tap Igor-bite/ghosted https://github.com/Igor-bite/ghosted
+brew install --cask ghosted
+```
+
+Or download `Ghosted-<version>.zip` from [Releases](https://github.com/Igor-bite/ghosted/releases), unzip and move `Ghosted.app` to `/Applications`. The app is signed with Developer ID and notarized. On first launch approve the camera extension (macOS 15+: System Settings → General → Login Items & Extensions → Camera Extensions; macOS 13–14: Privacy & Security → Allow).
+
 ## Layout
 
 | Path | What |
@@ -30,6 +39,11 @@ xcodebuild -project Vanish.xcodeproj -scheme Vanish -configuration Debug -derive
 
 Signing: team `4D7YJ8BY8H`, automatic signing. A Debug build needs this Mac registered in the developer account. The system extension activates only when the app runs from `/Applications` and the user approves it (macOS 15+: General → Login Items & Extensions → Camera Extensions; macOS 13–14: Privacy & Security → Allow).
 
-## Release (not wired yet)
+## Release
 
-Developer ID Application + Developer ID provisioning profiles for the app and the extension (system-extension install + App Groups), hardened runtime, notarized DMG. Sparkle updates are planned; `SUFeedURL` gets fixed at first release.
+1. Bump `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in `project.yml`, `xcodegen generate`.
+2. Archive: `xcodebuild -project Vanish.xcodeproj -scheme Vanish -configuration Release -archivePath build/release/Ghosted.xcarchive -allowProvisioningUpdates archive`.
+3. Export with Developer ID and upload to notarization (`Tools/ExportOptions.plist`): `xcodebuild -exportArchive -archivePath build/release/Ghosted.xcarchive -exportOptionsPlist Tools/ExportOptions.plist -exportPath build/release/export -allowProvisioningUpdates`.
+4. Fetch the stapled app: `xcodebuild -exportNotarizedApp -archivePath build/release/Ghosted.xcarchive -exportPath build/release/notarized`.
+5. `ditto -c -k --sequesterRsrc --keepParent build/release/notarized/Ghosted.app Ghosted-<version>.zip`, publish it with `gh release create v<version>`.
+6. Update `version` and `sha256` (`shasum -a 256`) in `Casks/ghosted.rb`.
