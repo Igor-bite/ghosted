@@ -19,11 +19,13 @@ final class RoomPlateStore {
 
     static let framesToCapture = 15
 
-    private let dir: URL = {
+    private let dir: URL = RoomPlateStore.directory
+    static let directory: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("Vanish", isDirectory: true)
     }()
-    private var imageURL: URL { dir.appendingPathComponent("room.png") }
+    static var imageURL: URL { directory.appendingPathComponent("room.png") }
+    private var imageURL: URL { Self.imageURL }
     private var metaURL: URL { dir.appendingPathComponent("room.json") }
 
     func load() -> Plate? {

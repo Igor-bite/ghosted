@@ -29,6 +29,26 @@ struct MenuView: View {
                         .frame(maxWidth: 160)
                     } label: { Text("Camera").fixedSize() }
                     Divider().padding(.leading, 38)
+                    row("photo.fill") {
+                        BackgroundMenu(library: model.backgrounds) { open(WindowID.settings) }
+                            .frame(maxWidth: 160, alignment: .trailing)
+                    } label: { Text("Background").fixedSize() }
+                    if settings.backgroundID == nil {
+                        Divider().padding(.leading, 38)
+                        row("square.on.square.dashed") {
+                            Picker("Room mode", selection: $settings.hybridRoom) {
+                                Text("Full").tag(false)
+                                Text("Live").tag(true)
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            .frame(width: 130)
+                            .help(Text(settings.hybridRoom
+                                       ? "Live room: lights and windows keep moving; a faint outline may remain."
+                                       : "Full replacement: the whole frame is the room snapshot."))
+                        } label: { Text("Room mode").fixedSize() }
+                    }
+                    Divider().padding(.leading, 38)
                     toggleRow("sparkles", "Dust effect", isOn: $settings.dustEnabled)
                     Divider().padding(.leading, 38)
                     toggleRow("hand.tap.fill", "Vanish on finger snap",
@@ -173,7 +193,7 @@ struct MenuView: View {
 
     private var statusShort: String {
         if !model.devicePresent { return String(localized: "Not installed") }
-        if isLive { return model.status.targetHidden ? String(localized: "Vanished") : String(localized: "Live") }
+        if isLive { return model.status.targetHidden ? String(localized: "Vanished") : String(localized: "On air") }
         return String(localized: "Idle")
     }
 

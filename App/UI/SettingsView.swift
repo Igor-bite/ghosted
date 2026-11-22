@@ -66,14 +66,30 @@ struct SettingsView: View {
                     Text(String(format: "%.1f s", settings.effectDuration)).monospacedDigit().frame(width: 44)
                 }
                 .disabled(!settings.dustEnabled)
-                Picker("Room while vanished", selection: $settings.hybridRoom) {
-                    Text("Live room (recommended)").tag(true)
-                    Text("Static snapshot").tag(false)
-                }
-                Text("Live room keeps lights and windows moving. Use Static if edges of your silhouette remain visible.")
-                    .font(.caption).foregroundStyle(.secondary)
             } header: {
                 Label("Effect", systemImage: "sparkles")
+            }
+
+            Section {
+                BackgroundPicker(library: model.backgrounds)
+                    .padding(.vertical, 4)
+                if settings.backgroundID == nil {
+                    Picker("Background while vanished", selection: $settings.hybridRoom) {
+                        Text("Full replacement (recommended)").tag(false)
+                        Text("Live room").tag(true)
+                    }
+                    Text(settings.hybridRoom
+                         ? "Live room keeps lights and windows moving, but a faint outline of your silhouette may remain — especially with a virtual background."
+                         : "The whole frame is replaced with the room snapshot. Nothing of you stays visible, even with a virtual background.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("You appear over this background and dissolve into it. No room snapshot needed.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } header: {
+                Label("Background", systemImage: "photo.on.rectangle.angled")
             }
 
             Section {
@@ -89,7 +105,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tint(Brand.violet)
-        .frame(width: 480)
+        .frame(width: 520, height: 720)
         .confirmationDialog("Remove Ghosted Camera?", isPresented: $confirmRemove) {
             Button("Remove", role: .destructive) { installer.deactivate() }
         } message: {

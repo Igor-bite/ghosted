@@ -8,6 +8,10 @@
 "Camera" = "Камера";
 "System default" = "По умолчанию";
 "Dust effect" = "Эффект пыли";
+"Background" = "Фон";
+"Full" = "Полная";
+"Live room: lights and windows keep moving; a faint outline may remain." = "Живая комната: свет и окна двигаются, может оставаться слабый контур.";
+"Full replacement: the whole frame is the room snapshot." = "Полная подмена: весь кадр — снимок комнаты.";
 "Vanish on finger snap" = "Исчезать по щелчку пальцами";
 "Vanish on “V” gesture" = "Исчезать по жесту «V»";
 "Preview & Room…" = "Предпросмотр и комната…";
@@ -18,7 +22,8 @@
 "Open setup guide" = "Открыть мастер настройки";
 "Not installed" = "Не установлена";
 "Vanished" = "Исчез";
-"Live" = "В эфире";
+"On air" = "В эфире";
+"Live" = "Живая";
 "Idle" = "Ожидание";
 "Finish setup to add the camera" = "Завершите настройку, чтобы добавить камеру";
 "In use by %@" = "Используется: %@";
@@ -59,10 +64,11 @@
 "Vanish on “V” gesture (hold 0.5 s)" = "Исчезать по жесту «V» (удерживать 0,5 с)";
 "Effect" = "Эффект";
 "Duration" = "Длительность";
-"Room while vanished" = "Комната, пока вас нет";
-"Live room (recommended)" = "Живая комната (рекомендуется)";
-"Static snapshot" = "Статичный снимок";
-"Live room keeps lights and windows moving. Use Static if edges of your silhouette remain visible." = "Живая комната сохраняет движение света и окон. Выберите статичный снимок, если по краям остаётся силуэт.";
+"Background while vanished" = "Фон, пока вас нет";
+"Full replacement (recommended)" = "Полная подмена (рекомендуется)";
+"Live room" = "Живая комната";
+"Live room keeps lights and windows moving, but a faint outline of your silhouette may remain — especially with a virtual background." = "Живая комната сохраняет движение света и окон, но может оставаться слабый контур силуэта — особенно на виртуальном фоне.";
+"The whole frame is replaced with the room snapshot. Nothing of you stays visible, even with a virtual background." = "Весь кадр заменяется снимком комнаты. От вас ничего не остаётся — даже на виртуальном фоне.";
 "General" = "Общие";
 "Open Ghosted at login" = "Открывать Ghosted при входе в систему";
 "Remove Ghosted Camera from this Mac…" = "Удалить Ghosted Camera с этого Mac…";
@@ -93,3 +99,23 @@
 "Removed" = "Удалено";
 "Open System Settings → General → Login Items & Extensions → Camera Extensions and turn on Ghosted." = "Откройте Системные настройки → Основные → Объекты входа и расширения → Расширения камеры и включите Ghosted.";
 "Open System Settings → Privacy & Security, scroll down and click “Allow” next to the message about Ghosted." = "Откройте Системные настройки → Конфиденциальность и безопасность, прокрутите вниз и нажмите «Разрешить» рядом с сообщением о Ghosted.";
+
+/* Backgrounds */
+"Room snapshot" = "Снимок комнаты";
+"Not captured" = "Не снят";
+"Can’t load" = "Не загружается";
+"Add image…" = "Добавить картинку…";
+"All backgrounds…" = "Все фоны…";
+"Room mode" = "Режим комнаты";
+"Choose an image for the virtual background" = "Выберите картинку для виртуального фона";
+"This file can’t be used as a background." = "Этот файл нельзя использовать как фон.";
+"You appear over this background and dissolve into it. No room snapshot needed." = "Вы видны поверх этого фона и растворяетесь в нём. Снимок комнаты не нужен.";
+"Capture your empty room or pick a background" = "Снимите пустую комнату или выберите фон";
+"Capture room…" = "Снять комнату…";
+"Choose background…" = "Выбрать фон…";
+"Aurora" = "Сияние";
+"Studio" = "Студия";
+"Sunset" = "Закат";
+"Ocean" = "Океан";
+"Forest" = "Лес";
+"Midnight" = "Полночь";

@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import ImageIO
 import Combine
 import ServiceManagement
 import UserNotifications
@@ -20,6 +21,7 @@ final class AppModel: ObservableObject {
     let settings = AppSettings()
     let installer = ExtensionInstaller()
     let preview = PreviewSink()
+    let backgrounds = BackgroundLibrary()
     private(set) var pipeline: Pipeline?
 
     @Published private(set) var status = Pipeline.Status()
@@ -32,6 +34,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var message: String?
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
     @Published private(set) var hotKeyFailed = false
+    /// Thumbnail of the captured empty room, if any.
+    @Published private(set) var roomThumbnail: NSImage?
 
     private var hotKey: HotKey?
     private let snap = SnapDetector()
@@ -66,6 +70,7 @@ final class AppModel: ObservableObject {
             .store(in: &cancellables)
         applySettings()
         refreshCameras()
+        refreshRoomThumbnail()
 
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.poll() }
@@ -107,6 +112,7 @@ final class AppModel: ObservableObject {
             pipeline?.captureRoom { [weak self] outcome in
                 guard let self else { return }
                 self.roomCapture = .done(outcome)
+                self.refreshRoomThumbnail()
                 self.updateDemand()
             }
         }
@@ -120,6 +126,62 @@ final class AppModel: ObservableObject {
     private var isRoomCaptureDone: Bool {
         if case .done = roomCapture { return true }
         return false
+    }
+
+    // MARK: Backgrounds
+
+    /// nil = empty-room snapshot.
+    func selectBackground(_ id: String?) {
+        settings.backgroundID = id
+    }
+
+    /// Lets the user pick an image file, adds it to the library and selects it.
+    func addBackgroundFromFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.message = String(localized: "Choose an image for the virtual background")
+        bringToFront()
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            selectBackground(try backgrounds.add(from: url))
+        } catch {
+            flash(String(localized: "This file can’t be used as a background."))
+        }
+    }
+
+    func removeBackground(_ id: String) {
+        if settings.backgroundID == id { selectBackground(nil) }
+        backgrounds.remove(id: id)
+    }
+
+    var backgroundName: String {
+        backgrounds.item(id: settings.backgroundID)?.name ?? String(localized: "Room snapshot")
+    }
+
+    private func refreshRoomThumbnail() {
+        guard let src = CGImageSourceCreateWithURL(RoomPlateStore.imageURL as CFURL, nil),
+              let thumb = CGImageSourceCreateThumbnailAtIndex(src, 0, [
+                  kCGImageSourceCreateThumbnailFromImageAlways: true,
+                  kCGImageSourceThumbnailMaxPixelSize: 320,
+              ] as CFDictionary)
+        else { roomThumbnail = nil; return }
+        roomThumbnail = NSImage(cgImage: thumb, size: NSSize(width: 160, height: 90))
+    }
+
+    private var appliedBackgroundID: String??
+
+    private func applyBackground() {
+        let id = settings.backgroundID
+        guard appliedBackgroundID != .some(id) else { return }
+        appliedBackgroundID = .some(id)
+        guard let id else { pipeline?.setVirtualBackground(nil); return }
+        guard let image = backgrounds.image(for: id) else {
+            // Missing file (deleted outside the app): fall back to the room snapshot.
+            settings.backgroundID = nil
+            return
+        }
+        pipeline?.setVirtualBackground(image)
     }
 
     func setLaunchAtLogin(_ on: Bool) {
@@ -144,6 +206,7 @@ final class AppModel: ObservableObject {
     // MARK: Internals
 
     private func applySettings() {
+        applyBackground()
         pipeline?.setConfig(.init(dustEnabled: settings.dustEnabled,
                                   hybridRoom: settings.hybridRoom,
                                   effectDuration: settings.effectDuration,

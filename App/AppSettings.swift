@@ -7,7 +7,10 @@ final class AppSettings: ObservableObject {
 
     @Published var cameraID: String? { didSet { d.set(cameraID, forKey: "cameraID") } }
     @Published var dustEnabled: Bool { didSet { d.set(dustEnabled, forKey: "dustEnabled") } }
+    /// false = full replacement with the room snapshot (default), true = live room (hybrid).
     @Published var hybridRoom: Bool { didSet { d.set(hybridRoom, forKey: "hybridRoom") } }
+    /// Virtual background id (see BackgroundLibrary); nil = empty-room snapshot from the camera.
+    @Published var backgroundID: String? { didSet { d.set(backgroundID, forKey: "backgroundID") } }
     @Published var effectDuration: Double { didSet { d.set(effectDuration, forKey: "effectDuration") } }
     @Published var snapEnabled: Bool { didSet { d.set(snapEnabled, forKey: "snapEnabled") } }
     @Published var snapThreshold: Double { didSet { d.set(snapThreshold, forKey: "snapThreshold") } }
@@ -21,7 +24,7 @@ final class AppSettings: ObservableObject {
     init() {
         d.register(defaults: [
             "dustEnabled": true,
-            "hybridRoom": true,
+            "hybridRoom": false,
             "effectDuration": 1.8,
             "snapEnabled": false,
             "snapThreshold": 0.8,
@@ -32,6 +35,7 @@ final class AppSettings: ObservableObject {
         cameraID = d.string(forKey: "cameraID")
         dustEnabled = d.bool(forKey: "dustEnabled")
         hybridRoom = d.bool(forKey: "hybridRoom")
+        backgroundID = d.string(forKey: "backgroundID")
         effectDuration = min(3, max(1, d.double(forKey: "effectDuration")))
         snapEnabled = d.bool(forKey: "snapEnabled")
         snapThreshold = d.double(forKey: "snapThreshold")

@@ -75,6 +75,9 @@ final class Compositor {
     static let changeThreshold = 0.06
     /// Difference range over which a pixel ramps from unchanged to fully changed.
     static let changeRamp = 0.06
+    /// Extra band (px at 1280×720) hidden around the person in hybrid mode. Covers the halo that
+    /// virtual backgrounds and imperfect segmentation leave at the silhouette edge.
+    static let haloRadius = 22.0
 
     func resetGain() {
         gain = SIMD3(repeating: 1)
@@ -83,14 +86,19 @@ final class Compositor {
 
     /// Room view while the person is hidden.
     ///
-    /// Hybrid: everything that differs from the empty-room plate (the person, but also their cast
+    /// Full replacement (`hybrid == false`): the whole frame is the room snapshot, so nothing of the
+    /// person can leak through. Hybrid: everything that differs from the empty-room plate (the person, but also their cast
     /// shadows and light they block) is replaced by the plate; unchanged areas stay live.
     /// The plate is gain-corrected to the live exposure so no seam shows at the boundary.
     func roomImage(live: CIImage, plate: CIImage, mask: CIImage?, hybrid: Bool) -> CIImage {
         guard hybrid, let mask else { return correctedPlate(plate) }
         let rect = CGRect(origin: .zero, size: size)
+        let halo = mask.clampedToExtent()
+            .applyingFilter("CIMorphologyMaximum", parameters: [kCIInputRadiusKey: Self.haloRadius])
+            .applyingGaussianBlur(sigma: Self.haloRadius / 3)
+            .cropped(to: rect)
         let hidden = changeMask(live: live, plate: correctedPlate(plate))
-            .applyingFilter("CIMaximumCompositing", parameters: [kCIInputBackgroundImageKey: mask])
+            .applyingFilter("CIMaximumCompositing", parameters: [kCIInputBackgroundImageKey: halo])
             .cropped(to: rect)
         if roomFrameCounter % 10 == 0 { updateGain(live: live, plate: plate, exclude: hidden) }
         roomFrameCounter += 1
@@ -98,6 +106,30 @@ final class Compositor {
             kCIInputBackgroundImageKey: live,
             kCIInputMaskImageKey: hidden,
         ]).cropped(to: rect)
+    }
+
+    /// Person (white in `mask`) from `person` over `background`.
+    func composite(person: CIImage, over background: CIImage, mask: CIImage) -> CIImage {
+        person.applyingFilter("CIBlendWithMask", parameters: [
+            kCIInputBackgroundImageKey: background,
+            kCIInputMaskImageKey: mask,
+        ]).cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    /// Uploads a CGImage once into an IOSurface-backed buffer so per-frame use costs no CPU→GPU copy.
+    func residentImage(_ image: CGImage) -> CIImage? {
+        var pb: CVPixelBuffer?
+        let attrs: [CFString: Any] = [
+            kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary,
+            kCVPixelBufferMetalCompatibilityKey: true,
+        ]
+        guard CVPixelBufferCreate(kCFAllocatorDefault, Int(size.width), Int(size.height), kCVPixelFormatType_32BGRA,
+                                  attrs as CFDictionary, &pb) == kCVReturnSuccess, let pb else { return nil }
+        let src = CIImage(cgImage: image)
+        let fitted = src.transformed(by: CGAffineTransform(scaleX: size.width / src.extent.width,
+                                                           y: size.height / src.extent.height))
+        render(fitted, into: pb)
+        return CIImage(cvPixelBuffer: pb)
     }
 
     func correctedPlate(_ plate: CIImage) -> CIImage {

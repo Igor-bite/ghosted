@@ -90,7 +90,9 @@ struct PreviewWindow: View {
 
     private var roomChip: some View {
         Group {
-            if !model.status.hasPlate {
+            if model.status.usingVirtualBackground {
+                hudChip(Text(model.backgroundName), systemImage: "photo.fill", tint: Brand.cyan)
+            } else if !model.status.hasPlate {
                 hudChip(Text("No room snapshot"), systemImage: "camera.viewfinder", tint: .orange)
             } else if model.status.plateCameraMismatch {
                 hudChip(Text("Room taken with another camera"), systemImage: "exclamationmark.triangle.fill", tint: .orange)

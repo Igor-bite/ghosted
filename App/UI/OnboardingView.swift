@@ -44,14 +44,26 @@ struct OnboardingView: View {
                         .buttonStyle(.borderedProminent)
                 }
 
-                step(4, title: "Capture your empty room", keepContent: true) {
-                    Button(model.status.hasPlate ? "Retake…" : "Open preview…") {
-                        openWindow(id: WindowID.preview)
-                        bringToFront()
+                step(4, title: "Capture your empty room or pick a background", keepContent: true) {
+                    HStack {
+                        Button(model.status.hasPlate && !model.status.usingVirtualBackground
+                               ? "Retake…" : "Capture room…") {
+                            openWindow(id: WindowID.preview)
+                            bringToFront()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(model.status.hasPlate ? .secondary : Brand.violet)
+                        .disabled(!model.cameraAuthorized)
+                        Button("Choose background…") {
+                            openWindow(id: WindowID.settings)
+                            bringToFront()
+                        }
+                        .buttonStyle(.bordered)
+                        if model.status.usingVirtualBackground {
+                            Label(model.backgroundName, systemImage: "photo.fill")
+                                .font(.callout).foregroundStyle(.secondary)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(model.status.hasPlate ? .secondary : Brand.violet)
-                    .disabled(!model.cameraAuthorized)
                 }
 
                 step(5, title: "Choose “Ghosted Camera” in your call app", keepContent: true) {

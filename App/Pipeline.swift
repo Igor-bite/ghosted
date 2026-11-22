@@ -19,6 +19,7 @@ final class Pipeline {
     struct Status: Equatable {
         var running = false
         var hasPlate = false
+        var usingVirtualBackground = false
         var plateCameraMismatch = false
         var targetHidden = false
         var sinkConnected = false
@@ -50,6 +51,9 @@ final class Pipeline {
     private var sm = EffectStateMachine(duration: 1.8)
     private var plate: CIImage?
     private var plateCameraID: String?
+    /// Chosen virtual background (output size, GPU-resident), replacing the room snapshot.
+    private var virtualBackground: CIImage?
+    private var lastPersonMask: CIImage?
     private var running = false
     private var lastFrameTime: CMTime?
     private var snapshot: (frame: CVPixelBuffer, mask: CVPixelBuffer, bboxX: SIMD2<Float>)?
@@ -69,6 +73,7 @@ final class Pipeline {
             plate = p.image
             plateCameraID = p.cameraID
         }
+        // A virtual background arrives later via setVirtualBackground; restore against the room for now.
         sm.restore(vanished: restoreHidden && plate != nil)
         capture.onFrame = { [weak self] pb, time in self?.process(pb, time: time) }
 
@@ -124,6 +129,17 @@ final class Pipeline {
         }
     }
 
+    /// Sets (or clears with nil) the virtual background. The image is aspect-filled to the output size.
+    func setVirtualBackground(_ image: CGImage?) {
+        let ci = image.flatMap { compositor.residentImage($0) }
+        queue.async {
+            self.virtualBackground = ci
+            self.lastPersonMask = nil
+            if ci == nil && self.plate == nil && self.sm.targetHidden { self.sm.restore(vanished: false) }
+            self.publishStatus()
+        }
+    }
+
     func deleteRoom() {
         queue.async {
             self.store.delete()
@@ -143,7 +159,7 @@ final class Pipeline {
         if !running {
             if sm.targetHidden {
                 sm.restore(vanished: false)
-            } else if plate != nil {
+            } else if effectivePlate != nil {
                 sm.restore(vanished: true)
             } else {
                 DispatchQueue.main.async { self.onNeedsRoomPlate?() }
@@ -151,7 +167,7 @@ final class Pipeline {
             publishStatus()
             return
         }
-        switch sm.trigger(hasRoomPlate: plate != nil) {
+        switch sm.trigger(hasRoomPlate: effectivePlate != nil) {
         case .needsRoomPlate:
             DispatchQueue.main.async { self.onNeedsRoomPlate?() }
         case .started:
@@ -179,37 +195,57 @@ final class Pipeline {
             if !sm.isAnimating { publishStatus() }
         }
 
-        let live = compositor.outputImage(from: frame)
+        let camera = compositor.outputImage(from: frame)
         guard let out = compositor.makeBuffer() else { return }
-        var liveBuffer: CVPixelBuffer = out
+
+        // Camera frame at output size for Vision, the V gesture and room capture. Rendered on demand.
+        var cameraBuffer: CVPixelBuffer?
+        func cameraPB() -> CVPixelBuffer? {
+            if cameraBuffer == nil, let b = compositor.makeBuffer() {
+                compositor.render(camera, into: b)
+                cameraBuffer = b
+            }
+            return cameraBuffer
+        }
+
+        // Virtual background: while visible, the person is composited over the chosen image.
+        var live = camera
+        var rawMask: CVPixelBuffer?
+        if let bg = virtualBackground, sm.phase != .vanished, let cb = cameraPB() {
+            rawMask = segmenter.rawMask(for: cb)
+            if let rawMask {
+                lastPersonMask = PersonSegmenter.process(rawMask, size: compositor.size, dilate: 0, feather: 1.5)
+            }
+            // Brief segmentation failure: reuse the last mask instead of flashing the real room.
+            live = lastPersonMask.map { compositor.composite(person: camera, over: bg, mask: $0) } ?? bg
+        }
 
         switch sm.phase {
         case .present:
             compositor.render(live, into: out)
 
         case .vanished:
-            guard let plate else { compositor.render(live, into: out); break }
-            if config.hybridRoom || config.vSignEnabled || roomFrames != nil, let lb = compositor.makeBuffer() {
-                compositor.render(live, into: lb)
-                liveBuffer = lb
+            if let bg = virtualBackground {
+                compositor.render(bg, into: out)
+            } else if let plate {
+                let mask = config.hybridRoom ? cameraPB().flatMap { segmenter.mask(for: $0, size: compositor.size) } : nil
+                // Privacy first: if segmentation fails, show the static room.
+                compositor.render(compositor.roomImage(live: camera, plate: plate, mask: mask, hybrid: config.hybridRoom), into: out)
+                dumpIfNeeded(live: camera, mask: mask, plate: plate, out: out)
+            } else {
+                compositor.render(camera, into: out)
             }
-            let mask = config.hybridRoom ? segmenter.mask(for: liveBuffer, size: compositor.size) : nil
-            // Privacy first: if segmentation fails, show the static room.
-            compositor.render(compositor.roomImage(live: live, plate: plate, mask: mask, hybrid: config.hybridRoom), into: out)
-            dumpIfNeeded(live: live, mask: mask, plate: plate, out: out)
 
         case .vanishing(let p), .appearing(let p):
             let progress: Double
             if case .vanishing = sm.phase { progress = p } else { progress = 1 - p }
-            guard let plate, let lb = compositor.makeBuffer() else { compositor.render(live, into: out); break }
+            guard effectivePlate != nil, let lb = compositor.makeBuffer() else { compositor.render(live, into: out); break }
             compositor.render(live, into: lb)
-            liveBuffer = lb
             if config.dustEnabled {
-                renderDust(live: live, liveBuffer: lb, plate: plate, progress: progress, into: out)
+                renderDust(live: live, liveBuffer: lb, camera: camera, rawMask: rawMask, progress: progress, into: out)
             } else {
-                let mask = config.hybridRoom ? segmenter.mask(for: lb, size: compositor.size) : nil
-                let room = compositor.roomImage(live: live, plate: plate, mask: mask, hybrid: config.hybridRoom)
-                compositor.render(compositor.crossfade(from: live, to: room, t: progress), into: out)
+                let mask = useHybrid ? segmenter.mask(for: lb, size: compositor.size) : nil
+                compositor.render(compositor.crossfade(from: live, to: room(camera: camera, mask: mask), t: progress), into: out)
             }
         }
 
@@ -217,31 +253,43 @@ final class Pipeline {
         sink.send(out, time: hostTime)
         onFrame?(out)
 
-        if config.vSignEnabled, vSign.process(liveBuffer, now: hostTime.seconds) {
+        // Plain camera output already is the camera frame: reuse it instead of rendering again.
+        if cameraBuffer == nil, sm.phase == .present, virtualBackground == nil { cameraBuffer = out }
+        if config.vSignEnabled, let cb = cameraPB(), vSign.process(cb, now: hostTime.seconds) {
             DispatchQueue.main.async { self.onGestureTrigger?() }
         }
 
-        if roomFrames != nil {
-            if liveBuffer === out && sm.phase != .present, let lb = compositor.makeBuffer() {
-                compositor.render(live, into: lb)
-                liveBuffer = lb
-            }
-            collectRoomFrame(liveBuffer)
+        if roomFrames != nil, let cb = cameraPB() {
+            collectRoomFrame(cb)
         }
     }
 
-    private func renderDust(live: CIImage, liveBuffer: CVPixelBuffer, plate: CIImage, progress: Double, into out: CVPixelBuffer) {
-        guard let raw = segmenter.rawMask(for: liveBuffer),
+    /// Plate in effect: the virtual background if one is chosen, else the empty-room snapshot.
+    private var effectivePlate: CIImage? { virtualBackground ?? plate }
+
+    /// Live-room blending only applies to the camera snapshot.
+    private var useHybrid: Bool { config.hybridRoom && virtualBackground == nil }
+
+    /// What remains once the person is gone.
+    private func room(camera: CIImage, mask: CIImage?) -> CIImage {
+        if let bg = virtualBackground { return bg }
+        guard let plate else { return camera }
+        return compositor.roomImage(live: camera, plate: plate, mask: mask, hybrid: config.hybridRoom)
+    }
+
+    private func renderDust(live: CIImage, liveBuffer: CVPixelBuffer, camera: CIImage, rawMask: CVPixelBuffer?,
+                            progress: Double, into out: CVPixelBuffer) {
+        guard let raw = rawMask ?? segmenter.rawMask(for: liveBuffer),
               let maskBuffer = compositor.makeMaskBuffer(),
               let roomBuffer = compositor.makeBuffer() else {
             // Segmentation failed: fall back to a crossfade so we never get stuck.
-            compositor.render(compositor.crossfade(from: live, to: plate, t: progress), into: out)
+            compositor.render(compositor.crossfade(from: live, to: room(camera: camera, mask: nil), t: progress), into: out)
             return
         }
         let mask = PersonSegmenter.process(raw, size: compositor.size,
                                            dilate: segmenter.dilateRadius, feather: segmenter.featherRadius)
         compositor.renderMask(mask, into: maskBuffer)
-        compositor.render(compositor.roomImage(live: live, plate: plate, mask: mask, hybrid: config.hybridRoom), into: roomBuffer)
+        compositor.render(room(camera: camera, mask: useHybrid ? mask : nil), into: roomBuffer)
         if snapshot == nil {
             snapshot = (liveBuffer, maskBuffer, Compositor.personBoundsX(rawMask: raw))
         }
@@ -307,8 +355,9 @@ final class Pipeline {
 
     private func publishStatus() {
         let s = Status(running: running,
-                       hasPlate: plate != nil,
-                       plateCameraMismatch: plate != nil && plateCameraID != nil && !(plateCameraID ?? "").isEmpty
+                       hasPlate: effectivePlate != nil,
+                       usingVirtualBackground: virtualBackground != nil,
+                       plateCameraMismatch: virtualBackground == nil && plate != nil && plateCameraID != nil && !(plateCameraID ?? "").isEmpty
                            && capture.currentDeviceID != nil && plateCameraID != capture.currentDeviceID,
                        targetHidden: sm.targetHidden,
                        sinkConnected: sink.isConnected)
